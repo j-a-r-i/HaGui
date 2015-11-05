@@ -1,0 +1,14 @@
+{
+  "name": "HaGUI",
+  "description": "Home Automation GUI",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+      "ws" : "latest",
+      "lokijs" : "latest",
+      "async" : "latest",
+      "oauth" : "latest",
+      "underscore" : "latest",
+      "telldus-live" : "latest"
+  }
+}

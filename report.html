@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<title>HaGUI</title>
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script language="javascript" type="text/javascript">
+var wsUri = "ws://192.168.100.40:8080/";
+var output;
+var cmd = "";
+var selType = "";
+var selMonth = "";
+
+google.load("visualization", "1", {packages:["corechart","table"]});
+
+function init()
+{
+    output = document.getElementById("output");
+    connect();
+}
+
+function connect()
+{
+    websocket = new WebSocket(wsUri);
+    websocket.onopen = function(evt) { onOpen(evt) };
+    websocket.onclose = function(evt) { onClose(evt) };
+    websocket.onmessage = function(evt) { onMessage(evt) };
+    websocket.onerror = function(evt) { onError(evt) };
+}
+
+function onOpen(evt)
+{
+    writeToScreen("CONNECTED");
+
+    doSend('cmd1');
+}
+
+function onClose(evt)
+{
+    writeToScreen("DISCONNECTED");
+}
+
+
+function drawPie(ctrl, name, data)
+{
+    var resp = JSON.parse(data);
+    var data = google.visualization.arrayToDataTable(resp);
+    var options = { title: name,
+		    legend: 'none'};
+    var chart = new google.visualization.PieChart(document.getElementById(ctrl));
+    chart.draw(data, options);
+}
+
+function drawLine(ctrl, name, data)
+{
+    var resp = JSON.parse(data);
+    var data = google.visualization.arrayToDataTable(resp);
+    var options = { title: name,
+                    curveType: 'none',
+                    legend: { position: 'bottom' }
+                  };
+
+    var formatter = new google.visualization.DateFormat({formatType: 'short'});
+    formatter.format(data, 1);
+
+    var chart = new google.visualization.LineChart(document.getElementById(ctrl));
+    chart.draw(data, options);
+}
+function drawTable(ctrl, name, data)
+{
+    var resp = JSON.parse(data);
+    var data = google.visualization.arrayToDataTable(resp);
+    var options = { showRowNumber: true,
+		            legend: 'none'};
+    var table = new google.visualization.Table(document.getElementById(ctrl));
+    table.draw(data, options);
+}
+
+
+function onMessage(evt)
+{
+    //writeToScreen('<span style="color: blue;">'+cmd+': ' + JSON.stringify(resp)+'</span>');
+
+    if (cmd == "cmd1") {
+        drawLine("chart1", "Temperature", evt.data);
+    }
+    else if (cmd == "cmd2") {
+        drawLine("chart2", "Humidity", evt.data);
+    }
+    else if (cmd == "cmd3") {
+        drawLine("chart3", "None", evt.data);
+    }
+    else if (cmd == "cmd4") {
+        drawLine("chart4", "None", evt.data);
+    }
+    else if (cmd == "cmd5") {
+        drawTable("chart5", "None", evt.data);
+    }
+    else {
+        writeToScreen('<span style="color: blue;">RESPONSE: ' + evt.data+'</span>');
+        alert('Unknown command:' + cmd);
+        //websocket.close();
+    }
+}
+
+function onError(evt)
+{
+    writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data);
+}
+
+function doSend(message)
+{
+    //writeToScreen("SENT: " + message);
+    cmd = message;
+    websocket.send(message);
+}
+
+function writeToScreen(message)
+{
+    var pre = document.createElement("p");
+    pre.style.wordWrap = "break-word";
+    pre.innerHTML = message;
+    output.appendChild(pre);
+}
+
+window.addEventListener("load", init, false);
+</script>
+  <form action = "">
+    <fieldset>
+      <button type = "button"
+              onclick = "connect()">
+        connect
+      </button>
+      <button type = "button"
+              onclick = "doSend('cmd1')">
+        cmd1
+      </button>
+      <button type = "button"
+              onclick = "doSend('cmd2')">
+        cmd2
+      </button>
+      <button type = "button"
+              onclick = "doSend('cmd3')">
+        cmd3
+      </button>
+      <button type = "button"
+              onclick = "doSend('cmd4')">
+        cmd4
+      </button>
+      <button type = "button"
+              onclick = "websocket.close()">
+        disconnect
+      </button>
+    </fieldset>
+  </form>
+
+  <h4>Charts</h4>
+  <table>
+    <tr>
+      <td><div id="chart1" style="width: 400px; height: 200px;"></div></td>
+      <td><div id="chart3" style="width: 400px; height: 200px;"></div></td>
+    </tr>
+    <tr>
+      <td><div id="chart2" style="width: 400px; height: 200px;"></div></td>
+      <td><div id="chart4" style="width: 400px; height: 200px;"></div></td>
+    </tr>
+  </table>
+  <h4>Log</h4>
+  <div id="output"></div>
+
