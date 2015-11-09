@@ -15,7 +15,7 @@ var publicKey   = config.publicKey,
     cloud,
     gSensors;
 
-var simulated = false;
+var simulated = true;
 
 var table = db.addCollection('temp', {indices:['time']});
 
@@ -150,26 +150,29 @@ function timer1()
 
     item.time = now;
 
-    if (simulated == true) {
-        item.setItem('ulko.temp',        random(-3, 4));
-        item.setItem('varasto.temp',     random(4,9));
-        item.setItem('varasto.humidity', random(30,60));
-        item.print(table);
-
-        if (table.data.length > 300)
-            table.remove(table.data[0]);
-        //console.log(table.data.length);
-    }
-    else {
-        async.each(gSensors, function(s, callback) {
-            cloud.getSensorInfo(s, readSensor);
-            callback(null);
-        }, function(err) {
-            if (err) console.log("Error fetching sensor data.");       
-        });
-    }
+    async.each(gSensors, function(s, callback) {
+        cloud.getSensorInfo(s, readSensor);
+        callback(null);
+    }, function(err) {
+        if (err) console.log("Error fetching sensor data.");       
+    });
 }
 
+function timer1simulated()
+{
+    gTime.setMinutes(gTime.getMinutes() + 10);
+    
+    item.time = gTime;
+    item.setItem('ulko.temp',        random(-3, 4));
+    item.setItem('varasto.temp',     random(4,9));
+    item.setItem('varasto.humidity', random(30,60));
+    item.print(table);
+
+    if (table.data.length > 300)
+        table.remove(table.data[0]);
+        
+    //console.log(gTime);    
+}
 
 //--------------------------------------------------------------------------------
 // Dummy timer to print ping
@@ -213,7 +216,7 @@ function onWsMessage(message)
         arr.push(['time', 'humidity']);
         
         table.data.forEach( function(item) {
-            arr.push([item.time, item.humidity2]);
+            arr.push([item.time, item.humi1]);
         });
         break;
 
@@ -235,14 +238,18 @@ function onWsMessage(message)
             [3,4]];*/
 }
 
+var gTime;
+
 //--------------------------------------------------------------------------------
 if (simulated == false) {
   setInterval(timer1, 600000);  // 10 min
   //setInterval(timer2, 10000);   // 1 min
 }
 else {
-  setInterval(timer1, 1000);  // 1 sec
-  setInterval(timer2, 2000);   // 1 min  
+  gTime = new Date();
+  
+  setInterval(timer1simulated, 100);  // 1 sec
+  //setInterval(timer2, 2000);   // 1 min  
 }
 
 wss.on('connection', function(ws) {
