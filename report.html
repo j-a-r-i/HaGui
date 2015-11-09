@@ -52,13 +52,19 @@ function drawPie(ctrl, name, data)
 function drawLine(ctrl, name, data)
 {
     var resp = JSON.parse(data);
-    var data = google.visualization.arrayToDataTable(resp);
+    var resp2 = resp.map(function(line) {
+	if (line[0] === "time")
+	    return line;
+	line[0] = new Date(line[0]);
+	return line;
+    });
+    var data = google.visualization.arrayToDataTable(resp2);
     var options = { title: name,
                     curveType: 'none',
                     legend: { position: 'bottom' }
                   };
 
-    var formatter = new google.visualization.DateFormat({formatType: 'short'});
+    var formatter = new google.visualization.DateFormat({pattern: 'd HH:mm'});
     formatter.format(data, 1);
 
     var chart = new google.visualization.LineChart(document.getElementById(ctrl));
@@ -152,7 +158,6 @@ window.addEventListener("load", init, false);
     </fieldset>
   </form>
 
-  <h4>Charts</h4>
   <table>
     <tr>
       <td><div id="chart1" style="width: 400px; height: 200px;"></div></td>
