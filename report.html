@@ -3,11 +3,12 @@
 <title>HaGUI</title>
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
 <script language="javascript" type="text/javascript">
-var wsUri = "ws://192.168.100.40:8080/";
+//var wsUri = "ws://192.168.100.40:8080/";
+var wsUri = "ws://localhost:8080/";
 var output;
 var cmd = "";
-var selType = "";
-var selMonth = "";
+var doCmd2 = false;
+var doCmd3 = false;
 
 google.load("visualization", "1", {packages:["corechart","table"]});
 
@@ -20,16 +21,18 @@ function init()
 function connect()
 {
     websocket = new WebSocket(wsUri);
-    websocket.onopen = function(evt) { onOpen(evt) };
-    websocket.onclose = function(evt) { onClose(evt) };
-    websocket.onmessage = function(evt) { onMessage(evt) };
-    websocket.onerror = function(evt) { onError(evt) };
+    websocket.onopen = onOpen;
+    websocket.onclose = onClose;
+    websocket.onmessage = onMessage;
+    websocket.onerror = onError;
 }
 
 function onOpen(evt)
 {
     writeToScreen("CONNECTED");
 
+    doCmd2 = true;
+    doCmd3 = true;
     doSend('cmd1');
 }
 
@@ -70,6 +73,7 @@ function drawLine(ctrl, name, data)
     var chart = new google.visualization.LineChart(document.getElementById(ctrl));
     chart.draw(data, options);
 }
+
 function drawTable(ctrl, name, data)
 {
     var resp = JSON.parse(data);
@@ -84,26 +88,35 @@ function drawTable(ctrl, name, data)
 function onMessage(evt)
 {
     //writeToScreen('<span style="color: blue;">'+cmd+': ' + JSON.stringify(resp)+'</span>');
-
-    if (cmd == "cmd1") {
+    switch (cmd) {
+    case 'cmd1':
         drawLine("chart1", "Temperature", evt.data);
-    }
-    else if (cmd == "cmd2") {
+	if (doCmd2)
+	    doSend("cmd2");
+	break;
+
+    case 'cmd2':
         drawLine("chart2", "Humidity", evt.data);
-    }
-    else if (cmd == "cmd3") {
-        drawLine("chart3", "None", evt.data);
-    }
-    else if (cmd == "cmd4") {
+	if (doCmd3)
+	    doSend("cmd3");
+	break;
+
+    case 'cmd3':
+        drawTable("chart3", "None", evt.data);
+	break;
+
+    case 'cmd4':
         drawLine("chart4", "None", evt.data);
-    }
-    else if (cmd == "cmd5") {
+	break;
+
+    case 'cmd5':
         drawTable("chart5", "None", evt.data);
-    }
-    else {
+	break;
+	
+    default:
         writeToScreen('<span style="color: blue;">RESPONSE: ' + evt.data+'</span>');
         alert('Unknown command:' + cmd);
-        //websocket.close();
+	break;
     }
 }
 
@@ -160,12 +173,12 @@ window.addEventListener("load", init, false);
 
   <table>
     <tr>
-      <td><div id="chart1" style="width: 400px; height: 200px;"></div></td>
-      <td><div id="chart3" style="width: 400px; height: 200px;"></div></td>
+      <td><div id="chart1" style="width: 500px; height: 300px;"></div></td>
+      <td><div id="chart3" style="width: 500px; height: 300px;"></div></td>
     </tr>
     <tr>
-      <td><div id="chart2" style="width: 400px; height: 200px;"></div></td>
-      <td><div id="chart4" style="width: 400px; height: 200px;"></div></td>
+      <td><div id="chart2" style="width: 500px; height: 300px;"></div></td>
+      <td><div id="chart4" style="width: 500px; height: 300px;"></div></td>
     </tr>
   </table>
   <h4>Log</h4>
