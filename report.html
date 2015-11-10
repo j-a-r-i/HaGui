@@ -1,7 +1,9 @@
 <!DOCTYPE html>
+<html>
 <meta charset="utf-8" />
 <title>HaGUI</title>
-<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script src="https://www.google.com/jsapi" type="text/javascript"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.3.14/angular.min.js"></script>
 <script language="javascript" type="text/javascript">
 //var wsUri = "ws://192.168.100.40:8080/";
 var wsUri = "ws://localhost:8080/";
@@ -141,7 +143,31 @@ function writeToScreen(message)
 }
 
 window.addEventListener("load", init, false);
+
+//------------------------------------------------------------------------------
+
+var haApp = angular.module('haApp', []);
+
+haApp.config(function($routeProvider) {
+    $routeProvider
+    .when('/', {
+	controller: 'HaController',
+	templateUrl: 'Partials/home.html'
+    })
+    .when('/config', {
+	controller: 'HaController',
+	templateUrl: 'Partials/config.html'
+    })
+    .when('/status', {
+	controller: 'HaController',
+	templateUrl: 'Partials/status.html'
+    })
+    .otherwise({ redirecTo: '/' });
+});
+
+
 </script>
+<body ng-app>
   <form action = "">
     <fieldset>
       <button type = "button"
@@ -183,4 +209,5 @@ window.addEventListener("load", init, false);
   </table>
   <h4>Log</h4>
   <div id="output"></div>
-
+</body>
+</html>
