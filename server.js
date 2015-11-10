@@ -15,7 +15,10 @@ var publicKey   = config.publicKey,
     cloud,
     gSensors;
 
-var simulated = true;
+var simulated = true,
+    simTemp1 = 0,
+    simTemp2 = 5,
+    simHumi1 = 40;
 
 var table = db.addCollection('temp', {indices:['time']});
 
@@ -67,13 +70,13 @@ class MeasureData {
   
   setItem(name, value) {
     if (name == "ulko.temp") {
-        this._temp1 = parseFloat(value);
+        this._temp1 = oneDecimal(parseFloat(value));
     }
     else if (name == "varasto.temp") {
-        this._temp2 = parseFloat(value);
+        this._temp2 = oneDecimal(parseFloat(value));
     }
     else if (name == "varasto.humidity") {
-        this._humidity = parseFloat(value);
+        this._humidity = oneDecimal(parseFloat(value));
     }
     this._counter++;
   }
@@ -108,8 +111,6 @@ class MeasureData {
 }
 
 //--------------------------------------------------------------------------------
-//var t = new Test();
-//t.foo();
 var item = new MeasureData();
 
 
@@ -158,14 +159,29 @@ function timer1()
     });
 }
 
+function simOffset(value, min, max)
+{
+    var offset = random(-0.5, 0.5);
+
+    if (value < min)
+	offset = Math.abs(offset);
+    if (value > max)
+	offset = -Math.abs(offset);
+    return offset;
+}
+
+
 function timer1simulated()
 {
     gTime.setMinutes(gTime.getMinutes() + 10);
     
-    item.time = gTime;
-    item.setItem('ulko.temp',        random(-3, 4));
-    item.setItem('varasto.temp',     random(4,9));
-    item.setItem('varasto.humidity', random(30,60));
+    item.time = new Date(gTime);
+    simTemp1 += simOffset(simTemp1, -5, 5);
+    simTemp2 += simOffset(simTemp2, 5, 15);
+    simHumi1 += simOffset(simHumi1, 30, 60);
+    item.setItem('ulko.temp',        simTemp1);
+    item.setItem('varasto.temp',     simTemp2);
+    item.setItem('varasto.humidity', simHumi1);
     item.print(table);
 
     if (table.data.length > 300)
@@ -184,18 +200,10 @@ function timer2()
   console.log("RSS = " + rss);
 }
 
-/*
-console.log("testing");
-timer2();
-
-var i;
-
-for (i=0; i<10000; i++) {
-  table.insert({time:"12.34.56", value1:i/10, value2:i*0.1, value3:i*0.2, value4:i*0.3})
+function oneDecimal(x) 
+{
+    return Math.round(x * 10) / 10;
 }
-
-timer2();
-*/
 
 function onWsMessage(message)
 {
@@ -221,11 +229,17 @@ function onWsMessage(message)
         break;
 
     case "cmd3":
+	arr.push(['location', 'temperature']);
+	var item = table.data[table.data.length - 1];
+	arr.push(['ulko', item.temp1]);
+	arr.push(['varasto', item.temp2]);
         console.log("Command 3");
         break;
+
     case "cmd4":
         console.log("Command 4");
         break;
+
     default:
         console.log("unknown command: " + message);
         break;
