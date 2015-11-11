@@ -170,9 +170,27 @@ app.config(function($routeProvider) {
         .otherwise({ redirecTo: '/' });
 });
 
-app.controller('HaController', function (/* $scope, $location, $http */) {
+app.controller('HaController', ['$scope', function ($scope) {
   console.log("HaController");
-});
+}]);
+
+app.controller('HaCtrlController', ['$scope', function ($scope) {
+    $scope.car1Leave = new Date();
+    $scope.car1Leave.setHours(7);
+    $scope.car1Leave.setMinutes(35);
+    $scope.car1Leave.setSeconds(0);
+    $scope.car1Leave.setMilliseconds(0);
+    
+    $scope.car2Leave = '08:43';
+
+    $scope.submit = function() {
+        var date = new Date($scope.car1Leave);
+
+        
+        console.log("CAR1 :" + $scope.car1Leave);
+        console.log("CAR2 :" + $scope.car2Leave);
+    };
+}]);
 
 
 
@@ -185,8 +203,15 @@ body {
 }
 fieldset
 { 
+  display: block;
   border: solid 1px grey;
   background-color: lightgrey;
+  padding-top: 0.1em;
+  padding-bottom: 0.1em;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+  margin-left: 0px;
+  margin-right: 0px;
 }
 </style>
 </head>

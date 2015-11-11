@@ -1,30 +1,44 @@
-<div class="container">
-  <h4>Config screen</h4>
-</div>
-<form>
+<br>
+<form ng-submit="submit()" ng-controller="HaCtrlController">
   <fieldset>
-    <legend>Car 1</legend>
-    Time <input type="text" name="time"><br>
-    <input type="checkbox" name="mon" value="" checked>Mon<br>
-    <input type="checkbox" name="tue" value="" checked>Tue<br>
-    <input type="checkbox" name="wed" value="" checked>Wed<br>
-    <input type="checkbox" name="thu" value="" checked>Thu<br>
-    <input type="checkbox" name="fri" value="" checked>Fri<br>
-    <input type="checkbox" name="sat" value="">Sun<br>
-    <input type="checkbox" name="sun" value="">Sat<br>
+    <legend><b>Car 1</b></legend>
+    <label for="time">Leaving</label>
+    <input type="time" name="time" ng-model="car1Leave" step="300.0"><br><br>
+    <input type="checkbox" name="mon" value="" checked>Mon
+    <input type="checkbox" name="tue" value="" checked>Tue
+    <input type="checkbox" name="wed" value="" checked>Wed
+    <input type="checkbox" name="thu" value="" checked>Thu
+    <input type="checkbox" name="fri" value="" checked>Fri
+    <input type="checkbox" name="sat" value="">Sun
+    <input type="checkbox" name="sun" value="">Sat<br><br>
+    <input type="submit" value="Save">
   </fieldset>
 </form>
 <br>
 <form>
   <fieldset>
-    <legend>Car 2</legend>
-    Time <input type="text" name="time"><br>
-    <input type="checkbox" name="mon" value="" checked>Mon<br>
-    <input type="checkbox" name="tue" value="" checked>Tue<br>
-    <input type="checkbox" name="wed" value="" checked>Wed<br>
-    <input type="checkbox" name="thu" value="" checked>Thu<br>
-    <input type="checkbox" name="fri" value="" checked>Fri<br>
-    <input type="checkbox" name="sat" value="">Sun<br>
-    <input type="checkbox" name="sun" value="">Sat<br>
+    <legend><b>Car 2</b></legend>
+    <label for="time">Leaving</label>
+    <input type="time" name="time"><br><br>
+    <input type="checkbox" name="mon" value="" checked>Mon
+    <input type="checkbox" name="tue" value="" checked>Tue
+    <input type="checkbox" name="wed" value="" checked>Wed
+    <input type="checkbox" name="thu" value="" checked>Thu
+    <input type="checkbox" name="fri" value="" checked>Fri
+    <input type="checkbox" name="sat" value="">Sun
+    <input type="checkbox" name="sun" value="">Sat<br><br>
+    <input type="submit" value="Save">
+  </fieldset>
+</form>
+<br>
+<form>
+  <fieldset>
+    <legend><b>Lights</b></legend>
+    <label for="startTime">Start</label>
+    <input type="time" name="startTime"><br>
+
+    <label for="stopTime">Stop</label>
+    <input type="time" name="stopTime"><br><br>
+    <input type="submit" value="Save">
   </fieldset>
 </form>
