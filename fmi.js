@@ -3,7 +3,7 @@
 // http://ilmatieteenlaitos.fi/tallennetut-kyselyt
 
 var fs = require("fs");
-var request = require('request');
+var http = require('http');
 var config = require('./config');
 var parser = require("xml2js").parseString;
 
@@ -18,12 +18,24 @@ const FIELD_DP = 10;
 
 function read(url, callback)
 {
-    request(url, function(err, response, html) {
+    return http.get(url, function(res) {
+        var body = '';
+        res.on('data', function(d) {
+            body += d;
+        });
+	res.on('error', function(e) {
+	    callback(e, null);
+	});
+        res.on('end', function() {
+	    callback(null, body);
+        });
+    });
+    /*request(url, function(err, response, html) {
         if (!!err) {
             return callback(err, html);
         }
         callback(null, html);
-    });
+    });*/
 }
 
 function findKey(data, key)
@@ -80,13 +92,14 @@ function parseXml(buf, cb)
 }
 
 
-if (true) {
+if (false) {
     var buf = fs.readFileSync("wfs.xml", "utf8");
     parseXml(buf);
 }
 else {
     read(url, function(err, html) {
         console.log(err);
+	console.log(html);
         parseXml(html);
     });
 }
