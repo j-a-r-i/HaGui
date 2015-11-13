@@ -5,6 +5,8 @@
 	},
 	"files": [
 		"server.js",
-		"report.html"
+		"report.html",
+		"fmi.js",
+		"scheduler.js"
 	]
 }

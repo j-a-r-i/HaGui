@@ -13,9 +13,12 @@ var publicKey   = config.publicKey,
     token       = config.token,
     tokenSecret = config.secret,
     cloud,
-    gSensors;
+    gSensors,
+    gTimer1,
+    gTimer2;
 
-var simulated = true;
+var simulated = true,
+    simFast = true;
 
 const SENSORS_NAMES = ["ulko.temp",
                        "varasto.temp",
@@ -194,7 +197,8 @@ function simOffset(value, min, max)
 
 function timer1simulated()
 {
-    gTime.setMinutes(gTime.getMinutes() + 10);
+    //gTime.setMinutes(gTime.getMinutes() + 10);
+    gTime  = new Date();
     
     item.time = new Date(gTime);
     simData.forEach(function(data) {
@@ -203,8 +207,14 @@ function timer1simulated()
     });
     item.print(table);
 
-    if (table.data.length > 300)
+    if (table.data.length > 300) {
         table.remove(table.data[0]);
+        if (simFast) {
+            simFast = false;
+            clearInterval(gTimer1);
+            gTimer1 = setInterval(timer1simulated, 60000)
+        }
+    }
 }
 
 //--------------------------------------------------------------------------------
@@ -277,14 +287,14 @@ var gTime;
 
 //--------------------------------------------------------------------------------
 if (simulated == false) {
-  setInterval(timer1, 600000);  // 10 min
-  //setInterval(timer2, 10000);   // 1 min
+  gTimer1 = setInterval(timer1, 600000);  // 10 min
+  gTimer2 = setInterval(timer2, 60000);   // 1 min
 }
 else {
   gTime = new Date();
   
-  setInterval(timer1simulated, 100);  // 1 sec
-  //setInterval(timer2, 2000);   // 1 min  
+  gTimer1 = setInterval(timer1simulated, 100);  // 1 sec
+  gTimer2 = setInterval(timer2, 60000);   // 1 min  
 }
 
 wss.on('connection', function(ws) {
