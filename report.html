@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <head>
 <meta charset="utf-8" />
+<meta name="author" content="Jari Ojanen">
 <title>HaGUI</title>
 <script src="https://www.google.com/jsapi" type="text/javascript"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular.min.js"></script>
@@ -12,6 +13,12 @@ var output;
 var cmd = "";
 var doCmd2 = false;
 var doCmd3 = false;
+
+const CMD_DATA1 ="cmd1";
+const CMD_DATA2 ="cmd2";
+const CMD_DATA3 ="cmd3";
+const CMD_STATUS = "stat";
+const CMD_CONTROL = "ctrl";
 
 google.load("visualization", "1", {packages:["corechart","table"]});
 
@@ -36,7 +43,7 @@ function onOpen(evt)
 
     doCmd2 = true;
     doCmd3 = true;
-    doSend('cmd1');
+    send(CMD_DATA1);
 }
 
 function onClose(evt)
@@ -92,34 +99,40 @@ function onMessage(evt)
 {
     //writeToScreen('<span style="color: blue;">'+cmd+': ' + JSON.stringify(resp)+'</span>');
     switch (cmd) {
-    case 'cmd1':
-        drawLine("chart1", "Temperature", evt.data);
-	if (doCmd2)
-	    doSend("cmd2");
-	break;
+    case CMD_DATA1:
+       drawLine("chart1", "Temperature", evt.data);
+	   if (doCmd2)
+	        send(CMD_DATA2);
+	   break;
 
-    case 'cmd2':
+    case CMD_DATA2:
         drawLine("chart2", "Humidity", evt.data);
-	if (doCmd3)
-	    doSend("cmd3");
-	break;
+        if (doCmd3)
+            send(CMD_DATA3);
+        break;
 
-    case 'cmd3':
+    case CMD_DATA3:
         drawTable("chart3", "None", evt.data);
-	break;
+    	break;
 
     case 'cmd4':
         drawLine("chart4", "None", evt.data);
-	break;
+    	break;
 
     case 'cmd5':
         drawTable("chart5", "None", evt.data);
-	break;
+    	break;
 	
+    case CMD_STATUS:
+        break;
+        
+    case CMD_CONTROL:
+        break;
+    
     default:
         writeToScreen('<span style="color: blue;">RESPONSE: ' + evt.data+'</span>');
         alert('Unknown command:' + cmd);
-	break;
+    	break;
     }
 }
 
@@ -128,11 +141,17 @@ function onError(evt)
     writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data);
 }
 
-function doSend(message)
+function send(command)
 {
+/*    if (args === undefined) {
+        args = [];
+    }
     //writeToScreen("SENT: " + message);
-    cmd = message;
-    websocket.send(message);
+    var msg = [command].concat(args);
+*/    
+    var msg = [command];
+    cmd = command;
+    websocket.send(JSON.stringify(msg));
 }
 
 function writeToScreen(message)
@@ -172,6 +191,9 @@ app.config(function($routeProvider) {
 
 app.controller('HaController', ['$scope', function ($scope) {
   console.log("HaController");
+  $scope.commands = [CMD_DATA1,
+                     CMD_DATA2,
+                     CMD_DATA3];
 }]);
 
 app.controller('HaCtrlController', ['$scope', function ($scope) {

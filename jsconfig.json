@@ -4,6 +4,7 @@
 		"module": "commonjs"
 	},
 	"files": [
-		"server.js"
+		"server.js",
+		"report.html"
 	]
 }

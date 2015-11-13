@@ -15,12 +15,33 @@ var publicKey   = config.publicKey,
     cloud,
     gSensors;
 
-var simulated = true,
-    simTemp1 = 0,
-    simTemp2 = 5,
-    simHumi1 = 40;
+var simulated = true;
+
+const SENSORS_NAMES = ["ulko.temp",
+                       "varasto.temp",
+                       "varasto.humidity"];
+
+var simData = [ { name: SENSORS_NAMES[0],
+                  value: 2.0,
+                  min: -5.0,
+                  max: 5.0},
+                { name: SENSORS_NAMES[1],
+                  value: 10.0,
+                  min: 5.0,
+                  max: 15.0},
+                { name: SENSORS_NAMES[2],
+                  value: 40.0,
+                  min: 30.0,
+                  max: 60.0}];
 
 var table = db.addCollection('temp', {indices:['time']});
+
+const CMD_DATA1 ="cmd1";
+const CMD_DATA2 ="cmd2";
+const CMD_DATA3 ="cmd3";
+const CMD_DATA4 ="cmd3";
+const CMD_STATUS = "stat";
+const CMD_CONTROL = "ctrl";
 
 if (simulated == false) {
     cloud = new TelldusAPI.TelldusAPI({ publicKey  : publicKey
@@ -69,13 +90,13 @@ class MeasureData {
   }
   
   setItem(name, value) {
-    if (name == "ulko.temp") {
+    if (name == SENSORS_NAMES[0]) {
         this._temp1 = oneDecimal(parseFloat(value));
     }
-    else if (name == "varasto.temp") {
+    else if (name == SENSORS_NAMES[1]) {
         this._temp2 = oneDecimal(parseFloat(value));
     }
-    else if (name == "varasto.humidity") {
+    else if (name == SENSORS_NAMES[2]) {
         this._humidity = oneDecimal(parseFloat(value));
     }
     this._counter++;
@@ -176,18 +197,14 @@ function timer1simulated()
     gTime.setMinutes(gTime.getMinutes() + 10);
     
     item.time = new Date(gTime);
-    simTemp1 += simOffset(simTemp1, -5, 5);
-    simTemp2 += simOffset(simTemp2, 5, 15);
-    simHumi1 += simOffset(simHumi1, 30, 60);
-    item.setItem('ulko.temp',        simTemp1);
-    item.setItem('varasto.temp',     simTemp2);
-    item.setItem('varasto.humidity', simHumi1);
+    simData.forEach(function(data) {
+       data.value += simOffset(data.value, data.min, data.max);
+       item.setItem(data.name, data.value); 
+    });
     item.print(table);
 
     if (table.data.length > 300)
         table.remove(table.data[0]);
-        
-    //console.log(gTime);    
 }
 
 //--------------------------------------------------------------------------------
@@ -209,10 +226,10 @@ function onWsMessage(message)
 {
     var arr = [];
 
-    console.log("Executing " + message);
+    console.log("Executing " + message[0]);
     
-    switch (message) {
-    case "cmd1":
+    switch (message[0]) {
+    case CMD_DATA1:
         arr.push(['time', 't1', 't2']);
         
         table.data.forEach( function(item) {
@@ -220,7 +237,7 @@ function onWsMessage(message)
         });
         break;
 
-    case "cmd2":
+    case CMD_DATA2:
         arr.push(['time', 'humidity']);
         
         table.data.forEach( function(item) {
@@ -228,16 +245,24 @@ function onWsMessage(message)
         });
         break;
 
-    case "cmd3":
-	arr.push(['location', 'temperature']);
-	var item = table.data[table.data.length - 1];
-	arr.push(['ulko', item.temp1]);
-	arr.push(['varasto', item.temp2]);
+    case CMD_DATA3:
+        arr.push(['location', 'temperature']);
+        var item = table.data[table.data.length - 1];
+        arr.push(['ulko', item.temp1]);
+        arr.push(['varasto', item.temp2]);
         console.log("Command 3");
         break;
 
-    case "cmd4":
+    case CMD_DATA4:
         console.log("Command 4");
+        break;
+
+    case CMD_STATUS:
+        console.log("status");
+        break;
+        
+    case CMD_CONTROL:
+        console.log("control");
         break;
 
     default:
@@ -246,10 +271,6 @@ function onWsMessage(message)
     }
 
     return arr;
-/*    return [['Temp1','Temp2'],
-            [1,2],
-            [2,3],
-            [3,4]];*/
 }
 
 var gTime;
@@ -269,7 +290,7 @@ else {
 wss.on('connection', function(ws) {
     ws.on('message', function(message) {
         //console.log('received: %s', message);
-        var ret = onWsMessage(message);
+        var ret = onWsMessage(JSON.parse(message));
         ws.send(JSON.stringify(ret));
     });
     ws.send('something');

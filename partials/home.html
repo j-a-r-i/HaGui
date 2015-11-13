@@ -1,25 +1,14 @@
   <div class="container">
+    <div ng-controller="HaController">
     <form action = "">
-      <fieldset>
+       <fieldset>
         <button type = "button"
                 onclick = "connect()">
           connect
         </button>
-        <button type = "button"
-                onclick = "doSend('cmd1')">
-          cmd1
-        </button>
-        <button type = "button"
-                onclick = "doSend('cmd2')">
-          cmd2
-        </button>
-        <button type = "button"
-                onclick = "doSend('cmd3')">
-          cmd3
-        </button>
-        <button type = "button"
-                onclick = "doSend('cmd4')">
-          cmd4
+         <button type = "button"
+                onclick = "send('cmd1')">
+          Chart1
         </button>
         <button type = "button"
                 onclick = "websocket.close()">
@@ -27,6 +16,7 @@
         </button>
       </fieldset>
     </form>
+    </div>
   </div>
 <div class="container">
   <h4>Home screen</h4>
