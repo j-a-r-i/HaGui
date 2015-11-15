@@ -119,12 +119,12 @@ if (true) {
 }
 else {
     read(url, function(err, html) {
-	fs.writeFile("wfs.xml", html, function(err) {
-	    if(err) {
-		return console.log(err);
-	    }
-	    console.log("wfs.xml was saved!");
-	}); 
+        fs.writeFile("wfs.xml", html, function(err) {
+            if(err) {
+                return console.log(err);
+            }
+            console.log("wfs.xml was saved!");
+        }); 
         console.log(err);
         parseXml(html);
     });
