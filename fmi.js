@@ -15,7 +15,7 @@ const FIELD_TEMP = 0;
 const FIELD_DP = 1;
 const FIELD_WIND = 2;
 
-
+//-----------------------------------------------------------------------------
 function read(url, callback)
 {
     return http.get(url, function(res) {
@@ -30,7 +30,8 @@ function read(url, callback)
 	    callback(null, body);
         });
     });
-    /*request(url, function(err, response, html) {
+    /* old implementation using request module
+      request(url, function(err, response, html) {
         if (!!err) {
             return callback(err, html);
         }
@@ -38,6 +39,8 @@ function read(url, callback)
     });*/
 }
 
+//-----------------------------------------------------------------------------
+// not used anymore
 function findKey(data, key)
 {
     var f = Object.keys(data);
@@ -56,8 +59,11 @@ function findKey(data, key)
     });
 }
 
+//-----------------------------------------------------------------------------
 function parseXml(buf, cb)
 {
+    var arr;
+    
     parser(buf, function(err, result) {
         if (err)
             return console.log(err);
@@ -73,7 +79,7 @@ function parseXml(buf, cb)
         n = n['gml:DataBlock'][0];
         n = n['gml:doubleOrNilReasonTupleList'][0];
         
-        var arr = n.split("\n");
+        arr = n.split("\n");
         
         arr = arr.map(function(i) { 
             i = i.trim();
@@ -107,25 +113,40 @@ function parseXml(buf, cb)
             if (arr[i] != null)
                 arr[i].date = arr2[i];
         }
-        console.log(arr.length + " , " +  arr2.length);
+        //console.log(arr.length + " , " +  arr2.length);
     });
-    return 0;
+    return arr;
 }
 
+//-----------------------------------------------------------------------------
+function fmi_sim(cb)
+{
+    fs.readFile("wfs.xml", "utf8", function(err, data) {
+        cb(err, parseXml(data));
+    });
+ }
 
-if (true) {
-    var buf = fs.readFileSync("wfs.xml", "utf8");
-    parseXml(buf);
-}
-else {
+//-----------------------------------------------------------------------------
+function fmi_start(cb)
+{
     read(url, function(err, html) {
-        fs.writeFile("wfs.xml", html, function(err) {
+        if (!!err) {
+            console.log(err);
+            return cb(err, null);
+        }
+/*        fs.writeFile("wfs.xml", html, function(err) {
             if(err) {
                 return console.log(err);
             }
             console.log("wfs.xml was saved!");
-        }); 
-        console.log(err);
-        parseXml(html);
+        });*/
+         
+        cb(null, parseXml(html));
     });
 }
+
+//-----------------------------------------------------------------------------
+module.exports = {
+	fmi_start: fmi_start,
+	fmi_sim: fmi_sim
+};
