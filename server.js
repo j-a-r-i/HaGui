@@ -44,7 +44,7 @@ var table = db.addCollection('temp', {indices:['time']});
 const CMD_DATA1 ="cmd1";
 const CMD_DATA2 ="cmd2";
 const CMD_DATA3 ="cmd3";
-const CMD_DATA4 ="cmd3";
+const CMD_WEATHER ="cmd4";
 const CMD_STATUS = "stat";
 const CMD_CONTROL = "ctrl";
 
@@ -264,7 +264,7 @@ function onWsMessage(message)
         arr.push(['varasto', item.temp2]);
         break;
 
-    case CMD_DATA4:
+    case CMD_WEATHER:
         arr = gWeather;
         break;
 

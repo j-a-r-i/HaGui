@@ -17,6 +17,7 @@ var doCmd3 = false;
 const CMD_DATA1 ="cmd1";
 const CMD_DATA2 ="cmd2";
 const CMD_DATA3 ="cmd3";
+const CMD_WEATHER = "cmd4";
 const CMD_STATUS = "stat";
 const CMD_CONTROL = "ctrl";
 
@@ -62,15 +63,22 @@ function drawPie(ctrl, name, data)
     chart.draw(data, options);
 }
 
-function drawLine(ctrl, name, data)
+function drawLine(ctrl, name, data, parse)
 {
-    var resp = JSON.parse(data);
-    var resp2 = resp.map(function(line) {
-	if (line[0] === "time")
-	    return line;
-	line[0] = new Date(line[0]);
-	return line;
-    });
+    var resp2;
+    
+    if (parse === true) {
+        var resp = JSON.parse(data);
+        resp2 = resp.map(function(line) {
+            if (line[0] === "time")
+                return line;
+            line[0] = new Date(line[0]);
+            return line;
+        });
+    }
+    else {
+        resp2 = data;
+    }
     var data = google.visualization.arrayToDataTable(resp2);
     var options = { title: name,
                     curveType: 'none',
@@ -100,27 +108,34 @@ function onMessage(evt)
     //writeToScreen('<span style="color: blue;">'+cmd+': ' + JSON.stringify(resp)+'</span>');
     switch (cmd) {
     case CMD_DATA1:
-       drawLine("chart1", "Temperature", evt.data);
+       drawLine("chart1", "Temperature", evt.data, true);
 	   if (doCmd2)
 	        send(CMD_DATA2);
 	   break;
 
     case CMD_DATA2:
-        drawLine("chart2", "Humidity", evt.data);
+        drawLine("chart2", "Humidity", evt.data, true);
         if (doCmd3)
             send(CMD_DATA3);
         break;
 
     case CMD_DATA3:
-        drawTable("chart3", "None", evt.data);
+        drawTable("chart3", "None", evt.data, true);
     	break;
 
-    case 'cmd4':
-        drawLine("chart4", "None", evt.data);
+    case CMD_WEATHER:
+        var arr = [["Time", "Temp"]];
+        var data = JSON.parse(evt.data);
+        data.forEach(function(i) {
+           if (i != null) {
+               arr.push([new Date(i.date), parseFloat(i.temp)]);
+           } 
+        });
+        drawLine("chart4", "None", arr, false);
     	break;
 
     case 'cmd5':
-        drawTable("chart5", "None", evt.data);
+        drawTable("chart5", "None", evt.data, false);
     	break;
 	
     case CMD_STATUS:
