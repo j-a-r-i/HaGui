@@ -6,7 +6,9 @@ var TelldusAPI = require('telldus-live'),
     WebSocket  = require('ws').Server,
     async      = require("async"),
     wss        = new WebSocket({port: 8080}),
-    config     = require('./config.json');
+    config     = require('./config.json'),
+    sche       = require('./scheduler.js'),
+    fmi        = require('./fmi.js');
 
 var publicKey   = config.publicKey,
     privateKey  = config.privateKey,
@@ -14,10 +16,10 @@ var publicKey   = config.publicKey,
     tokenSecret = config.secret,
     cloud,
     gSensors,
-    gTimer1,
-    gTimer2;
+    gWeather,
+    gTimer1;
 
-var simulated = true,
+var simulated = false,
     simFast = true;
 
 const SENSORS_NAMES = ["ulko.temp",
@@ -210,6 +212,7 @@ function timer1simulated()
     if (table.data.length > 300) {
         table.remove(table.data[0]);
         if (simFast) {
+            console.log("slow mode updating simulated data");
             simFast = false;
             clearInterval(gTimer1);
             gTimer1 = setInterval(timer1simulated, 60000)
@@ -222,7 +225,6 @@ function timer1simulated()
 //
 function timer2()
 {
-  //console.log(".");
   var rss = process.memoryUsage().rss / (1024*1024);
   console.log("RSS = " + rss);
 }
@@ -260,11 +262,10 @@ function onWsMessage(message)
         var item = table.data[table.data.length - 1];
         arr.push(['ulko', item.temp1]);
         arr.push(['varasto', item.temp2]);
-        console.log("Command 3");
         break;
 
     case CMD_DATA4:
-        console.log("Command 4");
+        arr = gWeather;
         break;
 
     case CMD_STATUS:
@@ -284,18 +285,26 @@ function onWsMessage(message)
 }
 
 var gTime;
+var s = new sche.Scheduler();
 
 //--------------------------------------------------------------------------------
 if (simulated == false) {
   gTimer1 = setInterval(timer1, 600000);  // 10 min
-  gTimer2 = setInterval(timer2, 60000);   // 1 min
 }
 else {
   gTime = new Date();
   
   gTimer1 = setInterval(timer1simulated, 100);  // 1 sec
-  gTimer2 = setInterval(timer2, 60000);   // 1 min  
 }
+
+s.add( new sche.IntervalAction(60, function() {
+    console.log("reading weather data");
+    fmi.fmi_start(function(err,arr) {
+        console.log(arr[1]);
+        gWeather = arr;
+    });
+}));
+s.start();
 
 wss.on('connection', function(ws) {
     ws.on('message', function(message) {
