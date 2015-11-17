@@ -6,7 +6,6 @@
   "dependencies": {
       "xml2js" : "latest",
       "ws" : "latest",
-      "lokijs" : "latest",
       "async" : "latest",
       "oauth" : "latest",
       "underscore" : "latest",

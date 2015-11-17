@@ -1,0 +1,18 @@
+{
+	"car1": {
+		"hour": "7",
+		"min": "30"
+	},
+	"car2": {
+		"hour": "8",
+		"min": "15"
+	},
+	"lights_start": {
+		"hour": "16",
+		"min": "30"
+	},
+	"lights_stop": {
+		"hour": "20",
+		"min": "30"
+	}
+}

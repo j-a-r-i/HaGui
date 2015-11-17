@@ -1,12 +1,11 @@
 "use strict";
 
 var TelldusAPI = require('telldus-live'),
-    Loki       = require('lokijs'),
-    db         = new Loki('ha.json'),
     WebSocket  = require('ws').Server,
     async      = require("async"),
     wss        = new WebSocket({port: 8080}),
     config     = require('./config.json'),
+    settings   = require('./settings.json'),
     sche       = require('./scheduler.js'),
     fmi        = require('./fmi.js');
 
@@ -16,10 +15,12 @@ var publicKey   = config.publicKey,
     tokenSecret = config.secret,
     cloud,
     gSensors,
-    gWeather,
+    gMeasures = [],
+    gWeather = [],
+    gLogging = [],
     gTimer1;
 
-var simulated = false,
+var simulated = true,
     simFast = true;
 
 const SENSORS_NAMES = ["ulko.temp",
@@ -39,14 +40,15 @@ var simData = [ { name: SENSORS_NAMES[0],
                   min: 30.0,
                   max: 60.0}];
 
-var table = db.addCollection('temp', {indices:['time']});
-
 const CMD_DATA1 ="cmd1";
 const CMD_DATA2 ="cmd2";
 const CMD_DATA3 ="cmd3";
 const CMD_WEATHER ="cmd4";
 const CMD_STATUS = "stat";
-const CMD_CONTROL = "ctrl";
+const CMD_CONTROL1 = "ctl1";
+const CMD_CONTROL2 = "ctl2";
+const CMD_CONTROL3 = "ctl3";
+const CMD_LOGGING = "log1";
 
 if (simulated == false) {
     cloud = new TelldusAPI.TelldusAPI({ publicKey  : publicKey
@@ -109,20 +111,20 @@ class MeasureData {
   
   print(table) {
       console.log(this._time.toLocaleTimeString() + ": " + this._temp1 + ", " + this._temp2 + ", " + this._humidity);
-      table.insert( {time: this._time,
-                     temp1: this._temp1,
-                     temp2: this._temp2,
-                     humi1: this._humidity
-                    });
+      table.push( {time: this._time,
+                   t1: this._temp1,
+                   t2: this._temp2,
+                   h1: this._humidity
+                   });
   }
   
   get counter() {
     return this._counter;
   }
 
-    get time() {
-        return this._time;
-    }
+  get time() {
+    return this._time;
+  }
     
   set time(value) {
     this._counter = 0;
@@ -143,20 +145,21 @@ var item = new MeasureData();
 //--------------------------------------------------------------------------------
 function readSensor(err, sensor)
 {
-    if (!!err) return console.log('readSensor id=' + sensor.id + ': ' + err.message);
+    if (!!err) {
+        return console.log('readSensor ' + err.message);
+    }
 
     sensor.data.forEach(function(data) {
         var name = sensor.name + "." + data.name;
 
         item.setItem(name, data.value);
       
-        if (item.counter == 3) {
-            item.print(table);
+        if (item.counter == SENSORS_NAMES.length) {
+            item.print(gMeasures);
 
-            if (table.data.length > 300)
-		table.remove(table.data[0]);
+            if (gMeasures.length > 300)
+                gMeasures.shift();
         }
-      //db.run("INSERT INTO measures (sensor,time,value) VALUES (?,?,?)", name, sqltime, data.value);      
     }, this);
 }
 
@@ -199,23 +202,26 @@ function simOffset(value, min, max)
 
 function timer1simulated()
 {
-    //gTime.setMinutes(gTime.getMinutes() + 10);
-    gTime  = new Date();
+    gTime.setMinutes(gTime.getMinutes() + 10);
+    //gTime = new Date();
     
     item.time = new Date(gTime);
     simData.forEach(function(data) {
        data.value += simOffset(data.value, data.min, data.max);
        item.setItem(data.name, data.value); 
     });
-    item.print(table);
+    item.print(gMeasures);
 
-    if (table.data.length > 300) {
-        table.remove(table.data[0]);
+    var c = sche.toClock2(gTime);
+    s.tick(c);
+
+    if (gMeasures.length > 300) {
+        gMeasures.shift();
         if (simFast) {
             console.log("slow mode updating simulated data");
             simFast = false;
             clearInterval(gTimer1);
-            gTimer1 = setInterval(timer1simulated, 60000)
+            gTimer1 = setInterval(timer1simulated, 2000)
         }
     }
 }
@@ -234,6 +240,14 @@ function oneDecimal(x)
     return Math.round(x * 10) / 10;
 }
 
+function parseTime(name)
+{
+    var hour = parseInt(name.hour)
+    var min  = parseInt(name.min);
+    
+    return sche.toClock(hour,min);
+}
+
 function onWsMessage(message)
 {
     var arr = [];
@@ -242,26 +256,24 @@ function onWsMessage(message)
     
     switch (message[0]) {
     case CMD_DATA1:
-        arr.push(['time', 't1', 't2']);
-        
-        table.data.forEach( function(item) {
-            arr.push([item.time, item.temp1, item.temp2]);
+        arr.push(['time', 't1', 't2']);       
+        gMeasures.forEach( function(item) {
+            arr.push([item.time, item.t1, item.t2]);
         });
         break;
 
     case CMD_DATA2:
-        arr.push(['time', 'humidity']);
-        
-        table.data.forEach( function(item) {
-            arr.push([item.time, item.humi1]);
+        arr.push(['time', 'humidity']);       
+        gMeasures.forEach( function(item) {
+            arr.push([item.time, item.h1]);
         });
         break;
 
     case CMD_DATA3:
         arr.push(['location', 'temperature']);
-        var item = table.data[table.data.length - 1];
-        arr.push(['ulko', item.temp1]);
-        arr.push(['varasto', item.temp2]);
+        var item = gMeasures[gMeasures.length - 1];
+        arr.push(['ulko', item.t1]);
+        arr.push(['varasto', item.t2]);
         break;
 
     case CMD_WEATHER:
@@ -272,8 +284,25 @@ function onWsMessage(message)
         console.log("status");
         break;
         
-    case CMD_CONTROL:
-        console.log("control");
+    case CMD_CONTROL1:
+        settings.car1.hour = message[1];
+        settings.car1.min = message[2];
+        car1.leave = parseTime(settings.car1);
+        break;
+
+    case CMD_CONTROL2:
+        settings.car2.hour = message[1];
+        settings.car2.min = message[2];
+        car2.leave = parseTime(settings.car2);
+        break;
+
+    case CMD_CONTROL3:
+        settings.lights_start.hour = message[1];
+        settings.lights_start.min = message[2];
+        settings.lights_stop.hour = message[3];
+        settings.lights_stop.min = message[4];
+        light.start = parseTime(settings.lights_start); 
+        light.stop = parseTime(settings.lights_stop); 
         break;
 
     default:
@@ -297,15 +326,41 @@ else {
   gTimer1 = setInterval(timer1simulated, 100);  // 1 sec
 }
 
-s.add( new sche.IntervalAction(60, function() {
+var weat = new sche.IntervalAction(60, 
+                                   sche.toClock2(gTime), 
+                                   function() {
     console.log("reading weather data");
-    fmi.fmi_start(function(err,arr) {
+    fmi.fmiRead(simulated, function(err,arr) {
         console.log(arr[1]);
         gWeather = arr;
     });
-}));
-s.start();
+});
+s.add(weat);
 
+var car1 = new sche.CarHeaterAction(parseTime(settings.car1), function(state) {
+    console.log("CAR1 " + state); 
+});
+s.add(car1);
+
+var car2 = new sche.CarHeaterAction(parseTime(settings.car2), function(state) {
+    console.log("CAR2 " + state); 
+});
+s.add(car2);
+
+var light = new sche.RangeAction(parseTime(settings.lights_start),
+                                 parseTime(settings.lights_stop), 
+                                 function(state) {
+    console.log("LIGHT " + state);  
+});
+s.add(light);
+
+if (simulated == false) {
+    s.start();
+}
+else {
+    car1.temperature = -12;
+    car2.temperature = -22;   
+}
 wss.on('connection', function(ws) {
     ws.on('message', function(message) {
         //console.log('received: %s', message);
