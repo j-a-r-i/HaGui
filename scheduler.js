@@ -7,6 +7,12 @@ function clock(hour,min)
 }
 
 //-----------------------------------------------------------------------------
+function clock2(date)
+{
+	return date.getHours()*60 + date.getMinutes();
+}
+
+//-----------------------------------------------------------------------------
 function toStr(clock)
 {
 	var hours = Math.ceil(clock / 60);
@@ -17,11 +23,22 @@ function toStr(clock)
 
 //-----------------------------------------------------------------------------
 class RangeAction {
-	constructor(astart, astop)
+	constructor(astart, astop, func)
 	{
 		this._start = astart;
 		this._stop = astop;
 		this._active = false;
+		this._callback = func;
+	}
+	
+	set start(v)
+	{
+		this._start = v;	
+	}
+
+	set stop(v)
+	{
+		this._stop = v;	
 	}
 	
 	tick(clock)
@@ -31,16 +48,17 @@ class RangeAction {
 		}
 		else if (clock < this._stop) {
 			if (!this._active) {
-				console.log("start");
+				//console.log("start");
+				this._callback(1);
 				this._active = true;
 			}	
 		}
 		else {
 			if (this._active) {
-				console.log("stop");
+				//console.log("stop");
+				this._callback(0);
 				this._active = false;
 			}
-			
 		}
 	}
 	
@@ -52,18 +70,94 @@ class RangeAction {
 
 //-----------------------------------------------------------------------------
 class IntervalAction {
-	constructor(interval, func)
+	constructor(interval, initialClock, func)
 	{
 		this._interval = interval;
 		this._callback = func;
-		this._started = 0 + this._interval;
+		this._started = initialClock + this._interval;
 	}
 	
 	tick(clock)
 	{
+		if (clock > 800 && this._started < 100)  // handle 24 -> 0 transition
+			return;
+			
+			
 		if (clock >= this._started) {
 			this._callback();
-			this._started = clock + this._interval;			
+			this._started = clock + this._interval;
+			if (this._started > 24*60) {
+				//console.log("too large clock value!");
+				this._started -= 24*60;
+			}		
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+class CarHeaterAction {
+	constructor(leaveTime, func)
+	{
+		this._leaveTime = leaveTime;
+		this._callback = func;
+		this._temp = 0;
+		this._active = false;
+	}
+	
+	set leave(leaveTime)
+	{
+		this._leaveTime = leaveTime;
+	}
+	
+	set temperature(temp)
+	{
+		this._temp = temp;	
+	}
+	
+	calcStarting()
+	{
+		var sTime = 60;
+		
+		if (this._temp < -20) {
+			sTime = 150;
+		}
+		else if (this._temp < -10) {
+			sTime = 120;
+		}
+		else if (this._temp < -5) {
+			sTime = 60;
+		}
+		else if (this._temp < 5) {
+			sTime = 30;
+		}
+		else {
+			sTime = 0;
+		}
+		return sTime;
+	}
+	
+	tick(clock)
+	{
+		if (this._active === true) {
+			if (clock > this._leaveTime) {
+				this._callback(0);
+				this._active = false;
+			}
+		}
+		else {
+			var start = this.calcStarting();
+			
+			if (start === 0)  // no need to heat car
+				return;
+			if (clock > this._leaveTime)
+				return;
+				
+			var sClock = this._leaveTime - start;
+			
+			if (clock >= sClock) {
+				this._callback(1);
+				this._active = true;			
+			}			
 		}
 	}
 }
@@ -100,19 +194,19 @@ class Scheduler {
 
 	onTimer(self)
 	{
-		var d = new Date();
-		var c = clock(d.getHours(), d.getMinutes());
+		var c = clock2(new Date());
 		//console.log("<timer2>");
 		self.tick(c);
 	}
-	
 }
 
 //-----------------------------------------------------------------------------
 module.exports = {
 	toClock: clock,
+	toClock2: clock2,
 	toStr: toStr,
 	RangeAction: RangeAction,
 	IntervalAction: IntervalAction,
+	CarHeaterAction: CarHeaterAction,
 	Scheduler: Scheduler
 };

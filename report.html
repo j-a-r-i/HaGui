@@ -7,8 +7,8 @@
 <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular-route.min.js"></script>
 <script language="javascript" type="text/javascript">
-//var wsUri = "ws://192.168.100.40:8080/";
-var wsUri = "ws://localhost:8080/";
+var wsUri = "ws://192.168.100.40:8080/";
+//var wsUri = "ws://localhost:8080/";
 var output;
 var cmd = "";
 var doCmd2 = false;
@@ -82,6 +82,7 @@ function drawLine(ctrl, name, data, parse)
     var data = google.visualization.arrayToDataTable(resp2);
     var options = { title: name,
                     curveType: 'none',
+                    hAxis: { format: 'dd HH:mm' },
                     legend: { position: 'bottom' }
                   };
 
@@ -131,7 +132,7 @@ function onMessage(evt)
                arr.push([new Date(i.date), parseFloat(i.temp)]);
            } 
         });
-        drawLine("chart4", "None", arr, false);
+        drawLine("chart4", "Forecast", arr, false);
     	break;
 
     case 'cmd5':
