@@ -1,5 +1,5 @@
 <br>
-<form ng-submit="submit()" ng-controller="HaCtrlController">
+<form ng-submit="submit1()" ng-controller="HaCtrlController">
   <fieldset>
     <legend><b>Car 1</b></legend>
     <label for="time">Leaving</label>
@@ -15,11 +15,11 @@
   </fieldset>
 </form>
 <br>
-<form>
+<form ng-submit="submit2()" ng-controller="HaCtrlController">
   <fieldset>
     <legend><b>Car 2</b></legend>
     <label for="time">Leaving</label>
-    <input type="time" name="time"><br><br>
+    <input type="time" name="time" ng-model="car2Leave" step="300.0"><br><br>
     <input type="checkbox" name="mon" value="" checked>Mon
     <input type="checkbox" name="tue" value="" checked>Tue
     <input type="checkbox" name="wed" value="" checked>Wed
@@ -31,14 +31,14 @@
   </fieldset>
 </form>
 <br>
-<form>
+<form ng-submit="submit3()" ng-controller="HaCtrlController">
   <fieldset>
     <legend><b>Lights</b></legend>
     <label for="startTime">Start</label>
-    <input type="time" name="startTime"><br>
+    <input type="time" name="startTime" ng-model="lightStart" step="300.0"><br>
 
     <label for="stopTime">Stop</label>
-    <input type="time" name="stopTime"><br><br>
+    <input type="time" name="stopTime" ng-model="lightStop" step="300.0"><br><br>
     <input type="submit" value="Save">
   </fieldset>
 </form>

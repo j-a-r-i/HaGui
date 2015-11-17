@@ -20,6 +20,10 @@ const CMD_DATA3 ="cmd3";
 const CMD_WEATHER = "cmd4";
 const CMD_STATUS = "stat";
 const CMD_CONTROL = "ctrl";
+const CMD_CONTROL1 = "ctl1";
+const CMD_CONTROL2 = "ctl2";
+const CMD_CONTROL3 = "ctl3";
+const CMD_LOGGING = "log1";
 
 google.load("visualization", "1", {packages:["corechart","table"]});
 
@@ -170,6 +174,20 @@ function send(command)
     websocket.send(JSON.stringify(msg));
 }
 
+function send2(command, args)
+{
+/*    if (args === undefined) {
+        args = [];
+    }
+    //writeToScreen("SENT: " + message);
+    var msg = [command].concat(args);
+*/    
+    var msg = [command].concat(args);
+    cmd = command;
+    websocket.send(JSON.stringify(msg));
+}
+
+
 function writeToScreen(message)
 {
     var pre = document.createElement("p");
@@ -212,22 +230,38 @@ app.controller('HaController', ['$scope', function ($scope) {
                      CMD_DATA3];
 }]);
 
-app.controller('HaCtrlController', ['$scope', function ($scope) {
-    $scope.car1Leave = new Date();
-    $scope.car1Leave.setHours(7);
-    $scope.car1Leave.setMinutes(35);
-    $scope.car1Leave.setSeconds(0);
-    $scope.car1Leave.setMilliseconds(0);
+function createDate(hour, min)
+{
+    var ret = new Date();
     
-    $scope.car2Leave = '08:43';
+    ret.setHours(hour);
+    ret.setMinutes(min);
+    ret.setSeconds(0);
+    ret.setMilliseconds(0);
+    
+    return ret;
+}
 
-    $scope.submit = function() {
+app.controller('HaCtrlController', ['$scope', function ($scope) {
+    $scope.car1Leave = createDate(7,35);    
+    $scope.car2Leave = createDate(8,15);
+    $scope.lightStart = createDate(16, 0);
+    $scope.lightStop  = createDate(20, 30);
+    
+    $scope.submit1 = function() {
         var date = new Date($scope.car1Leave);
 
-        
+        send2(CMD_CONTROL1, [date.getHours(), date.getMinutes()]);
         console.log("CAR1 :" + $scope.car1Leave);
+    };
+    $scope.submit2 = function() {
+        var date = new Date($scope.car2Leave);
+
+        send2(CMD_CONTROL2, [date.getHours(), date.getMinutes()]);
         console.log("CAR2 :" + $scope.car2Leave);
     };
+    $scope.submit3 = function() {
+   };
 }]);
 
 
