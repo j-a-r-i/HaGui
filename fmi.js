@@ -119,34 +119,32 @@ function parseXml(buf, cb)
 }
 
 //-----------------------------------------------------------------------------
-function fmi_sim(cb)
+function fmiRead(simulated, cb)
 {
-    fs.readFile("wfs.xml", "utf8", function(err, data) {
-        cb(err, parseXml(data));
-    });
- }
-
-//-----------------------------------------------------------------------------
-function fmi_start(cb)
-{
-    read(url, function(err, html) {
-        if (!!err) {
-            console.log(err);
-            return cb(err, null);
-        }
-/*        fs.writeFile("wfs.xml", html, function(err) {
-            if(err) {
-                return console.log(err);
+    if (simulated === true) {
+        fs.readFile("wfs.xml", "utf8", function(err, data) {
+            cb(err, parseXml(data));
+        });        
+    }
+    else {
+        read(url, function(err, html) {
+            if (!!err) {
+                console.log(err);
+                return cb(err, null);
             }
-            console.log("wfs.xml was saved!");
-        });*/
-         
-        cb(null, parseXml(html));
-    });
+    /*        fs.writeFile("wfs.xml", html, function(err) {
+                if(err) {
+                    return console.log(err);
+                }
+                console.log("wfs.xml was saved!");
+            });*/
+            
+            cb(null, parseXml(html));
+        });
+    }
 }
 
 //-----------------------------------------------------------------------------
 module.exports = {
-	fmi_start: fmi_start,
-	fmi_sim: fmi_sim
+	fmiRead: fmiRead,
 };
