@@ -7,7 +7,8 @@ var TelldusAPI = require('telldus-live'),
     config     = require('./config.json'),
     settings   = require('./settings.json'),
     sche       = require('./scheduler.js'),
-    fmi        = require('./fmi.js');
+    fmi        = require('./fmi.js'),
+    log        = require('./log.js');
 
 var publicKey   = config.publicKey,
     privateKey  = config.privateKey,
@@ -54,7 +55,7 @@ if (simulated == false) {
     cloud = new TelldusAPI.TelldusAPI({ publicKey  : publicKey
                                         , privateKey : privateKey }).login(token, tokenSecret, function(err, user) {
       if (!!err)
-          return console.log('login error: ' + err.message);
+          return log.error('telldus login: ' + err.message);
 
       cloud.getSensors(function(err, sensors) {
           if (!!err) return console.log('getSensors: ' + err.message);
@@ -68,7 +69,7 @@ if (simulated == false) {
       }).getDevices(function(err, devices) {
           var i;
 
-          if (!!err) return console.log('getDeviceInfo: ' + err.message);
+          if (!!err) return log.error('telldus getDeviceInfo: ' + err.message);
 
           for (i = 0; i < devices.length; i++) {
               if (devices[i].type === 'device') 
@@ -81,7 +82,7 @@ if (simulated == false) {
           }
       });
     }).on('error', function(err) {
-        console.log('background error: ' + err.message);
+        log.error('telldus error: ' + err.message);
     });
 }
 
@@ -110,7 +111,7 @@ class MeasureData {
   }
   
   print(table) {
-      console.log(this._time.toLocaleTimeString() + ": " + this._temp1 + ", " + this._temp2 + ", " + this._humidity);
+      log.normal(this._time.toLocaleTimeString() + ": " + this._temp1 + ", " + this._temp2 + ", " + this._humidity);
       table.push( {time: this._time,
                    t1: this._temp1,
                    t2: this._temp2,
@@ -146,7 +147,7 @@ var item = new MeasureData();
 function readSensor(err, sensor)
 {
     if (!!err) {
-        return console.log('readSensor ' + err.message);
+        return log.error('readSensor ' + err.message);
     }
 
     sensor.data.forEach(function(data) {
@@ -184,7 +185,7 @@ function timer1()
         cloud.getSensorInfo(s, readSensor);
         callback(null);
     }, function(err) {
-        if (err) console.log("Error fetching sensor data.");       
+        if (err) log.error("Error fetching sensor data.");       
     });
 }
 
@@ -218,7 +219,7 @@ function timer1simulated()
     if (gMeasures.length > 300) {
         gMeasures.shift();
         if (simFast) {
-            console.log("slow mode updating simulated data");
+            log.normal("slow mode updating simulated data");
             simFast = false;
             clearInterval(gTimer1);
             gTimer1 = setInterval(timer1simulated, 2000)
@@ -232,7 +233,7 @@ function timer1simulated()
 function timer2()
 {
   var rss = process.memoryUsage().rss / (1024*1024);
-  console.log("RSS = " + rss);
+  log.normal("RSS = " + rss);
 }
 
 function oneDecimal(x) 
@@ -252,7 +253,7 @@ function onWsMessage(message)
 {
     var arr = [];
 
-    console.log("Executing " + message[0]);
+    log.normal("Executing " + message[0]);
     
     switch (message[0]) {
     case CMD_DATA1:
@@ -281,7 +282,6 @@ function onWsMessage(message)
         break;
 
     case CMD_STATUS:
-        console.log("status");
         break;
         
     case CMD_CONTROL1:
@@ -306,7 +306,7 @@ function onWsMessage(message)
         break;
 
     default:
-        console.log("unknown command: " + message);
+        log.error("unknown command: " + message);
         break;
     }
 
@@ -329,7 +329,7 @@ else {
 var weat = new sche.IntervalAction(60, 
                                    sche.toClock2(gTime), 
                                    function() {
-    console.log("reading weather data");
+    log.normal("reading weather data");
     fmi.fmiRead(simulated, function(err,arr) {
         console.log(arr[1]);
         gWeather = arr;
@@ -338,19 +338,19 @@ var weat = new sche.IntervalAction(60,
 s.add(weat);
 
 var car1 = new sche.CarHeaterAction(parseTime(settings.car1), function(state) {
-    console.log("CAR1 " + state); 
+    log.normal("CAR1 " + state); 
 });
 s.add(car1);
 
 var car2 = new sche.CarHeaterAction(parseTime(settings.car2), function(state) {
-    console.log("CAR2 " + state); 
+    log.normal("CAR2 " + state); 
 });
 s.add(car2);
 
 var light = new sche.RangeAction(parseTime(settings.lights_start),
                                  parseTime(settings.lights_stop), 
                                  function(state) {
-    console.log("LIGHT " + state);  
+    log.normal("LIGHT " + state);  
 });
 s.add(light);
 
