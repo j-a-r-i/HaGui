@@ -8,6 +8,7 @@ var TelldusAPI = require('telldus-live'),
     settings   = require('./settings.json'),
     sche       = require('./scheduler.js'),
     fmi        = require('./fmi.js'),
+    info       = require('./info.js'),
     log        = require('./log.js');
 
 var publicKey   = config.publicKey,
@@ -21,7 +22,7 @@ var publicKey   = config.publicKey,
     gLogging = [],
     gTimer1;
 
-var simulated = true,
+var simulated = false,
     simFast = true;
 
 const SENSORS_NAMES = ["ulko.temp",
@@ -282,6 +283,8 @@ function onWsMessage(message)
         break;
 
     case CMD_STATUS:
+        arr.push(info.loadavg());
+        arr.push(info.meminfo());
         break;
         
     case CMD_CONTROL1:
@@ -313,7 +316,7 @@ function onWsMessage(message)
     return arr;
 }
 
-var gTime;
+var gTime = new Date();
 var s = new sche.Scheduler();
 
 //--------------------------------------------------------------------------------
@@ -321,8 +324,6 @@ if (simulated == false) {
   gTimer1 = setInterval(timer1, 600000);  // 10 min
 }
 else {
-  gTime = new Date();
-  
   gTimer1 = setInterval(timer1simulated, 100);  // 1 sec
 }
 
