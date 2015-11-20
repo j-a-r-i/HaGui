@@ -288,18 +288,21 @@ function onWsMessage(message)
         break;
         
     case CMD_CONTROL1:
+        arr.push("ok");
         settings.car1.hour = message[1];
         settings.car1.min = message[2];
         car1.leave = parseTime(settings.car1);
         break;
 
     case CMD_CONTROL2:
+        arr.push("ok");
         settings.car2.hour = message[1];
         settings.car2.min = message[2];
         car2.leave = parseTime(settings.car2);
         break;
 
     case CMD_CONTROL3:
+        arr.push("ok");
         settings.lights_start.hour = message[1];
         settings.lights_start.min = message[2];
         settings.lights_stop.hour = message[3];
@@ -309,6 +312,7 @@ function onWsMessage(message)
         break;
 
     default:
+        arr.push("unknown command");
         log.error("unknown command: " + message);
         break;
     }
@@ -368,5 +372,4 @@ wss.on('connection', function(ws) {
         var ret = onWsMessage(JSON.parse(message));
         ws.send(JSON.stringify(ret));
     });
-    ws.send('something');
 });

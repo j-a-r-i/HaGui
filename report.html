@@ -11,6 +11,7 @@ var wsUri = "ws://192.168.100.40:8080/";
 //var wsUri = "ws://localhost:8080/";
 var output;
 var cmd = "";
+var stat = null;
 var doCmd2 = false;
 var doCmd3 = false;
 
@@ -144,6 +145,7 @@ function onMessage(evt)
     	break;
 	
     case CMD_STATUS:
+        alert(evt.data);
         break;
         
     case CMD_CONTROL:
@@ -151,7 +153,7 @@ function onMessage(evt)
     
     default:
         writeToScreen('<span style="color: blue;">RESPONSE: ' + evt.data+'</span>');
-        alert('Unknown command:' + cmd);
+        alert('Unknown command:' + cmd + '\n' + evt.data);
     	break;
     }
 }
@@ -264,6 +266,14 @@ app.controller('HaCtrlController', ['$scope', function ($scope) {
    };
 }]);
 
+app.controller('HaStatController', ['$scope', function ($scope) {
+    $scope.data = ["<empty"];
+    
+    $scope.update = function() {
+        stat = $scope;
+        send(CMD_STATUS);  
+    };
+}]);
 
 
 //------------------------------------------------------------------------------
