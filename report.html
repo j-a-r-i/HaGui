@@ -215,11 +215,11 @@ app.config(function($routeProvider) {
 	        templateUrl: 'partials/home.html'
         })
         .when('/config', {
-	        controller: 'HaController',
+	        controller: 'HaCtrlController',
 	        templateUrl: 'partials/config.html'
         })
         .when('/status', {
-	        controller: 'HaController',
+	        controller: 'HaStatController',
 	        templateUrl: 'partials/status.html'
         })
         .otherwise({ redirecTo: '/' });
