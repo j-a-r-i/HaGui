@@ -1,5 +1,7 @@
 "use strict";
 
+var version = "0.1.0";
+
 var TelldusAPI = require('telldus-live'),
     WebSocket  = require('ws').Server,
     async      = require("async"),
@@ -285,6 +287,7 @@ function onWsMessage(message)
         break;
 
     case CMD_STATUS:
+        arr.push(version);
         arr.push(info.loadavg());
         arr.push(info.meminfo());
         arr.push(log.getErrors());
@@ -326,6 +329,8 @@ function onWsMessage(message)
 
 var gTime = new Date();
 var s = new sche.Scheduler();
+
+log.history("HaGUI V" + version);
 
 //--------------------------------------------------------------------------------
 if (simulated == false) {
