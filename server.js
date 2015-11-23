@@ -104,6 +104,8 @@ class MeasureData {
     }
     else if (name == SENSORS_NAMES[1]) {
         this._temp2 = oneDecimal(parseFloat(value));
+        
+        s.setval("TEMP", this._temp2);
     }
     else if (name == SENSORS_NAMES[2]) {
         this._humidity = oneDecimal(parseFloat(value));
@@ -285,6 +287,8 @@ function onWsMessage(message)
     case CMD_STATUS:
         arr.push(info.loadavg());
         arr.push(info.meminfo());
+        arr.push(log.getErrors());
+        arr.push(log.getHistory());
         break;
         
     case CMD_CONTROL1:
@@ -343,33 +347,42 @@ var weat = new sche.IntervalAction(60,
 s.add(weat);
 
 var car1 = new sche.CarHeaterAction(parseTime(settings.car1), function(state) {
-    log.normal("CAR1 " + state); 
+    log.history("CAR1 " + state); 
 });
 s.add(car1);
 
 var car2 = new sche.CarHeaterAction(parseTime(settings.car2), function(state) {
-    log.normal("CAR2 " + state); 
+    log.history("CAR2 " + state); 
 });
 s.add(car2);
 
 var light = new sche.RangeAction(parseTime(settings.lights_start),
                                  parseTime(settings.lights_stop), 
                                  function(state) {
-    log.normal("LIGHT " + state);  
+    log.history("LIGHT " + state);  
 });
 s.add(light);
+
+var room = new sche.RoomHeaterAction(5.0, 10.0, function(state) {
+    log.history("ROOM " + state);
+})
+s.add(room);
 
 if (simulated == false) {
     s.start();
 }
 else {
-    car1.temperature = -12;
-    car2.temperature = -22;   
+    s.setval("TEMP", -12.0);
 }
 wss.on('connection', function(ws) {
     ws.on('message', function(message) {
-        //console.log('received: %s', message);
-        var ret = onWsMessage(JSON.parse(message));
-        ws.send(JSON.stringify(ret));
+        try {
+            //console.log('received: %s', message);
+            var ret = onWsMessage(JSON.parse(message));
+            ws.send(JSON.stringify(ret));
+        }
+        catch (e) {
+            log.error(e);
+        }
     });
 });

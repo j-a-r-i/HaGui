@@ -31,6 +31,10 @@ class RangeAction {
 		this._callback = func;
 	}
 	
+	setval(name, value)
+	{
+	}
+	
 	set start(v)
 	{
 		this._start = v;	
@@ -76,6 +80,10 @@ class IntervalAction {
 		this._callback = func;
 		this._started = initialClock + this._interval;
 	}
+
+	setval(name, value)
+	{
+	}
 	
 	tick(clock)
 	{
@@ -107,6 +115,13 @@ class CarHeaterAction {
 	set leave(leaveTime)
 	{
 		this._leaveTime = leaveTime;
+	}
+	
+	setval(name, value)
+	{
+		if (name == "TEMP") {
+			this._temp = value;
+		}	
 	}
 	
 	set temperature(temp)
@@ -163,6 +178,48 @@ class CarHeaterAction {
 }
 
 //-----------------------------------------------------------------------------
+class RoomHeaterAction {
+	constructor(tempLow, tempHigh, func)
+	{
+		this._callback = func;
+		this._tlow = tempLow;
+		this._thigh = tempHigh;
+		this._active = false;
+	}
+	
+	set tlow(temp)
+	{
+		this._tlow = temp;
+	}
+	
+	set thigh(temp)
+	{
+		this._thigh = temp;
+	}
+	
+	setval(name, value)
+	{
+		if (name == "TEMP") {
+			if ((this._active == false) && (value < this._tlow)) {
+				this._callback(1);
+				this._active = true;
+			}
+			if ((this._active == true) && (value > this._thigh)) {
+				this._callback(1);
+				this._active = false;				
+			}
+		}	
+	}
+	
+	tick(clock)
+	{
+		// todo: ensure heater is on/off after some time is activated/deactivated
+		//       It's possible that controller is missing the signal sometimes.
+	}
+}
+
+
+//-----------------------------------------------------------------------------
 class Scheduler {
 	constructor()
 	{
@@ -192,6 +249,13 @@ class Scheduler {
 		});
 	}
 
+	setval(name, value)
+	{
+		this._actions.forEach(function(act) {
+			act.setval(name, value);
+		});		
+	}
+
 	onTimer(self)
 	{
 		var c = clock2(new Date());
@@ -208,5 +272,6 @@ module.exports = {
 	RangeAction: RangeAction,
 	IntervalAction: IntervalAction,
 	CarHeaterAction: CarHeaterAction,
+	RoomHeaterAction: RoomHeaterAction,
 	Scheduler: Scheduler
 };
