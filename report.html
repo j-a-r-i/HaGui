@@ -87,11 +87,11 @@ function drawLine(ctrl, name, data, parse)
     var data = google.visualization.arrayToDataTable(resp2);
     var options = { title: name,
                     curveType: 'none',
-                    hAxis: { format: 'dd HH:mm' },
+                    hAxis: { format: 'HH:mm' },
                     legend: { position: 'bottom' }
                   };
 
-    var formatter = new google.visualization.DateFormat({pattern: 'd HH:mm'});
+    var formatter = new google.visualization.DateFormat({pattern: 'HH:mm'});
     formatter.format(data, 1);
 
     var chart = new google.visualization.LineChart(document.getElementById(ctrl));
@@ -283,8 +283,7 @@ body {
   padding-top: 0px;
   padding-bottom: 0px;
 }
-fieldset
-{ 
+fieldset { 
   display: block;
   border: solid 1px grey;
   background-color: lightgrey;
@@ -294,6 +293,12 @@ fieldset
   padding-right: 0.5em;
   margin-left: 0px;
   margin-right: 0px;
+}
+.chartbox {
+  display: inline-block;
+  border: solid 1px grey;
+  background-color: lightgrey;
+  margin: 2px;
 }
 </style>
 </head>
