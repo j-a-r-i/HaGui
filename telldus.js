@@ -49,6 +49,18 @@ class Telldus
         });       
     }
     
+    power(device, state)
+    {
+        var self = this;
+        return new Promise((resolve,reject) => {
+            self._cloud.onOffDevice(self._devices[device], state, function(err, result) {
+                if (!!err)
+                    return reject(err);
+                resolve(result);
+            });
+        });
+    }
+    
     sensor(i)
     {
         var self = this;
@@ -60,35 +72,13 @@ class Telldus
                 var arr = []
                 sensor.data.forEach((data) => {
                     var name = sensor.name + "." + data.name;
-                    log.normal(name);
                     arr.push([name, data.value]);
                 });
                 return resolve(arr);
               });
          });
     }
-    
-    readSensors(cb)
-    {
-        var arr = [];
-        var self = this;
-        this._sensors.forEach(function (s) {
-            self._cloud.getSensorInfo(s, function(err, sensor) {
-                if (!!err) {
-                    log.error(err.message);
-                    cb(err, null); 
-                    return;
-                }
-                sensor.data.forEach(function(data) {
-                    var name = sensor.name + "." + data.name;
-                    log.normal(name);
-                    arr.push([name, data.value]);
-                });
-            });
-        });
-    }
 }
-
 
 /*cloud.getDevices(function(err, devices) {
     var i;
@@ -108,43 +98,29 @@ class Telldus
 });*/
 
 //--------------------------------------------------------------------------------
-/*function readSensor(err, sensor)
-{
-    if (!!err) {
-        return log.error('readSensor ' + err.message);
-    }
-
-    sensor.data.forEach(function(data) {
-        var name = sensor.name + "." + data.name;
-        
-        log.normal(name);
-        item.setItem(name, data.value);
-      
-        if (item.counter == SENSORS_NAMES.length) {
-            item.print(gMeasures);
-
-            if (gMeasures.length > 300)
-                gMeasures.shift();
-        }
-    }, this);
-}*/
 
 
-
-var t = new Telldus();
+/*var t = new Telldus();
 
 t.init(function (err) {
     if (!!err) return log.error(err);
     
     
     Promise.all([t.sensor(0), t.sensor(1)]).then((values) => {
-        log.normal(values);
+        var d = new Date();
+        
+        values.forEach((i) => {
+            i.forEach((i2) => {
+               log.normal(i2);             
+            });
+        });
+
     }, (reason) => {
         log.normal(reason);
     })
-    
-    t.readSensors(function (err,arr) {
-        if (!!err) return log.error(err);
-        log.normal(t._sensors);    
-    })
-});
+});*/
+
+//-----------------------------------------------------------------------------
+module.exports = {
+	Telldus: Telldus
+};

@@ -1,27 +1,20 @@
 "use strict";
 
-var version = "0.1.0";
+var version = "0.1.1";
 
-var TelldusAPI = require('telldus-live'),
-    WebSocket  = require('ws').Server,
-    async      = require("async"),
+var WebSocket  = require('ws').Server,
     wss        = new WebSocket({port: 8080}),
     config     = require('./config.json'),
     settings   = require('./settings.json'),
     sche       = require('./scheduler.js'),
     fmi        = require('./fmi.js'),
     info       = require('./info.js'),
-    log        = require('./log.js');
+    log        = require('./log.js'),
+    telldus    = require('./telldus.js');
 
-var publicKey   = config.publicKey,
-    privateKey  = config.privateKey,
-    token       = config.token,
-    tokenSecret = config.secret,
-    cloud,
-    gSensors,
+var tcloud,
     gMeasures = [],
     gWeather = [],
-    gLogging = [],
     gTimer1;
 
 var simulated = false,
@@ -55,49 +48,35 @@ const CMD_CONTROL3 = "ctl3";
 const CMD_LOGGING = "log1";
 
 if (simulated == false) {
-    cloud = new TelldusAPI.TelldusAPI({ publicKey  : publicKey
-                                        , privateKey : privateKey }).login(token, tokenSecret, function(err, user) {
-      if (!!err)
-          return log.error('telldus login: ' + err.message);
-
-      cloud.getSensors(function(err, sensors) {
-          if (!!err) return console.log('getSensors: ' + err.message);
-          gSensors = sensors;
-
-          item.time = new Date();
-          
-          gSensors.forEach(function (s) {
-              cloud.getSensorInfo(s, readSensor);
-          });
-      }).getDevices(function(err, devices) {
-          var i;
-
-          if (!!err) return log.error('telldus getDeviceInfo: ' + err.message);
-
-          for (i = 0; i < devices.length; i++) {
-              if (devices[i].type === 'device') 
-                  cloud.getDeviceInfo(devices[i], function(err,device) {
-                      if (!!err) 
-                          return console.log('getDeviceInfo id=' + device.id + ': ' + err.message);
-                      
-                      console.log(device.name + ' ' + (device.online === '0' ? 'absent' : device.status));
-                  });
-          }
-      });
-    }).on('error', function(err) {
-        log.error('telldus error: ' + err.message);
+    tcloud = new telldus.Telldus();
+    
+    tcloud.init((err) => {
+        if (!!err) {
+            log.error(err);
+        }
+        else {
+            Promise.all([tcloud.sensor(0), tcloud.sensor(1)]).then((values) => {
+                item.time = new Date();              
+                values.forEach((i) => {
+                    i.forEach((i2) => {
+                        item.setItem(i2[0], i2[1]);             
+                    });
+                });
+                item.print(gMeasures);               
+            }, (reason) => {
+                log.error(reason);
+            })      
+        }
     });
 }
 
 //--------------------------------------------------------------------------------
 class MeasureData {
   constructor() {
-    console.log("create");
     this._time = "";
     this._temp1 = -99.0;
     this._temp2 = -99.0;
     this._humidity = -99.0;
-    this._counter = 0;
   }
   
   setItem(name, value) {
@@ -112,7 +91,6 @@ class MeasureData {
     else if (name == SENSORS_NAMES[2]) {
         this._humidity = oneDecimal(parseFloat(value));
     }
-    this._counter++;
   }
   
   print(table) {
@@ -124,16 +102,11 @@ class MeasureData {
                    });
   }
   
-  get counter() {
-    return this._counter;
-  }
-
   get time() {
     return this._time;
   }
     
   set time(value) {
-    this._counter = 0;
     this._time = value;
   }
   set temp2(value) {
@@ -149,26 +122,6 @@ var item = new MeasureData();
 
 
 //--------------------------------------------------------------------------------
-function readSensor(err, sensor)
-{
-    if (!!err) {
-        return log.error('readSensor ' + err.message);
-    }
-
-    sensor.data.forEach(function(data) {
-        var name = sensor.name + "." + data.name;
-
-        item.setItem(name, data.value);
-      
-        if (item.counter == SENSORS_NAMES.length) {
-            item.print(gMeasures);
-
-            if (gMeasures.length > 300)
-                gMeasures.shift();
-        }
-    }, this);
-}
-
 function random (low, high)
 {
     return Math.random() * (high - low) + low;
@@ -178,20 +131,21 @@ function random (low, high)
 // A periodic timer for reading data from Telldus server.
 //
 function timer1()
-{ 
-    var now  = new Date();
-    //var sqltime = now.toJSON().replace("T", " ");
-    //sqltime = sqltime.substring(0,19);
-    //item.time = now.toLocaleTimeString();
+{
+    Promise.all([tcloud.sensor(0), tcloud.sensor(1)]).then((values) => {
+        item.time = new Date();              
+        values.forEach((i) => {
+            i.forEach((i2) => {
+                item.setItem(i2[0], i2[1]);             
+            });
+        });
+        item.print(gMeasures);               
 
-    item.time = now;
-
-    async.each(gSensors, function(s, callback) {
-        cloud.getSensorInfo(s, readSensor);
-        callback(null);
-    }, function(err) {
-        if (err) log.error("Error fetching sensor data.");       
-    });
+        if (gMeasures.length > 300)
+            gMeasures.shift();
+    }, (reason) => {
+        log.error(reason);
+    });      
 }
 
 function simOffset(value, min, max)
