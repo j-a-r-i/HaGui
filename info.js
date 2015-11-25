@@ -5,6 +5,7 @@ var exec = require('child_process').exec,
 
 const MEMINFO = '/proc/meminfo';
 const LOADAVG = '/proc/loadavg';
+const UPTIME  = '/proc/uptime';
 
 //-----------------------------------------------------------------------------
 function df()
@@ -42,7 +43,20 @@ function loadavg()
 }
 
 //-----------------------------------------------------------------------------
+function uptime()
+{
+    var line = fs.readFileSync(UPTIME).toString();
+    var up = line.trim().split(" ");
+    
+    up[0] = parseFloat(up[0]) / (24*3600); 
+    up[1] = parseFloat(up[1]) / (24*3600);
+    
+    return up;
+}
+
+//-----------------------------------------------------------------------------
 module.exports = {
 	meminfo: meminfo,
-	loadavg: loadavg
+	loadavg: loadavg,
+    uptime: uptime
 };
