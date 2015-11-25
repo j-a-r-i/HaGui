@@ -9,6 +9,7 @@
 		"fmi.js",
 		"scheduler.js",
 		"info.js",
-		"telldus.js"
+		"telldus.js",
+		"test6.js"
 	]
 }

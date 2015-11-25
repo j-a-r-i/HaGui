@@ -22,44 +22,66 @@ function toStr(clock)
 }
 
 //-----------------------------------------------------------------------------
-class RangeAction {
-	constructor(astart, astop, func)
+class Action {
+	constructor(aname, exports) {
+		this._name = aname;
+		this._exports = exports;
+	}
+	
+	get name()
 	{
-		this._start = astart;
-		this._stop = astop;
+		return this._name;
+	}
+	
+	dump()
+	{
+		var out = this._name;
+		
+		this._exports.forEach((i) => {
+			out = out.concat(" ", i, ":", this[i]);
+		});
+		
+		console.log(out);
+		return out;
+	}
+}
+
+//-----------------------------------------------------------------------------
+class RangeAction extends Action {
+	constructor(aname, emitter, astart, astop, func)
+	{
+		super(aname, ['start', 'stop']);
+		this.start = astart;
+		this.stop = astop;
 		this._active = false;
 		this._callback = func;
 	}
 	
 	setval(name, value)
 	{
-	}
-	
-	set start(v)
-	{
-		this._start = v;	
-	}
-
-	set stop(v)
-	{
-		this._stop = v;	
+		switch (name) {
+		case "START":
+			this.start = value;
+			break;
+		case "STOP":
+			this.stop = value;
+			break;	
+		}
 	}
 	
 	tick(clock)
 	{
-		if (clock < this._start) {
+		if (clock < this.start) {
 			// do nothing
 		}
-		else if (clock < this._stop) {
+		else if (clock < this.stop) {
 			if (!this._active) {
-				//console.log("start");
 				this._callback(1);
 				this._active = true;
 			}	
 		}
 		else {
 			if (this._active) {
-				//console.log("stop");
 				this._callback(0);
 				this._active = false;
 			}
@@ -68,14 +90,15 @@ class RangeAction {
 	
 	print()
 	{
-		console.log("action " + this._start + " - " + this._stop);
+		console.log("action " + this.start + " - " + this.stop);
 	}
 }
 
 //-----------------------------------------------------------------------------
-class IntervalAction {
-	constructor(interval, initialClock, func)
+class IntervalAction extends Action {
+	constructor(aname, emitter, interval, initialClock, func)
 	{
+		super(aname, []);
 		this._interval = interval;
 		this._callback = func;
 		this._started = initialClock + this._interval;
@@ -103,30 +126,34 @@ class IntervalAction {
 }
 
 //-----------------------------------------------------------------------------
-class CarHeaterAction {
-	constructor(leaveTime, func)
+class CarHeaterAction extends Action {
+	constructor(aname, emitter, leaveTime, func)
 	{
-		this._leaveTime = leaveTime;
+		super(aname, ['leaveTime']);
+		this.leaveTime = leaveTime;
 		this._callback = func;
 		this._temp = 0;
 		this._active = false;
+		
+		
+		var self = this;
+		emitter.on("temp", (temp) => {
+			self._temp = temp;
+		});
 	}
 	
 	set leave(leaveTime)
 	{
-		this._leaveTime = leaveTime;
+		this.leaveTime = leaveTime;
 	}
 	
 	setval(name, value)
 	{
-		if (name == "TEMP") {
-			this._temp = value;
-		}	
-	}
-	
-	set temperature(temp)
-	{
-		this._temp = temp;	
+		switch (name) {
+		case "LEAVE":
+			this.leaveTime = value;
+			break;
+		}
 	}
 	
 	calcStarting()
@@ -154,7 +181,7 @@ class CarHeaterAction {
 	tick(clock)
 	{
 		if (this._active === true) {
-			if (clock > this._leaveTime) {
+			if (clock > this.leaveTime) {
 				this._callback(0);
 				this._active = false;
 			}
@@ -164,10 +191,10 @@ class CarHeaterAction {
 			
 			if (start === 0)  // no need to heat car
 				return;
-			if (clock > this._leaveTime)
+			if (clock > this.leaveTime)
 				return;
 				
-			var sClock = this._leaveTime - start;
+			var sClock = this.leaveTime - start;
 			
 			if (clock >= sClock) {
 				this._callback(1);
@@ -178,37 +205,34 @@ class CarHeaterAction {
 }
 
 //-----------------------------------------------------------------------------
-class RoomHeaterAction {
-	constructor(tempLow, tempHigh, func)
+class RoomHeaterAction extends Action {
+	constructor(aname, emitter, tempLow, tempHigh, func)
 	{
+		super(aname, ['tlow', 'thigh']);
 		this._callback = func;
-		this._tlow = tempLow;
-		this._thigh = tempHigh;
+		this.tlow = tempLow;
+		this.thigh = tempHigh;
 		this._active = false;
+		
+		emitter.on("temp", (temp) => {
+			this.setTemp(temp);
+		})
 	}
 	
-	set tlow(temp)
+	setTemp(value)
 	{
-		this._tlow = temp;
-	}
-	
-	set thigh(temp)
-	{
-		this._thigh = temp;
+		if ((this._active == false) && (value < this.tlow)) {
+			this._callback(1);
+			this._active = true;
+		}
+		if ((this._active == true) && (value > this.thigh)) {
+			this._callback(1);
+			this._active = false;				
+		}		
 	}
 	
 	setval(name, value)
 	{
-		if (name == "TEMP") {
-			if ((this._active == false) && (value < this._tlow)) {
-				this._callback(1);
-				this._active = true;
-			}
-			if ((this._active == true) && (value > this._thigh)) {
-				this._callback(1);
-				this._active = false;				
-			}
-		}	
 	}
 	
 	tick(clock)
@@ -249,12 +273,15 @@ class Scheduler {
 		});
 	}
 
-	setval(name, value)
+    setVal(action, sname, value)
 	{
 		this._actions.forEach(function(act) {
-			act.setval(name, value);
-		});		
+			if (act.name === action) {
+				act.setval(sname, value)
+			}
+		});				
 	}
+
 
 	onTimer(self)
 	{

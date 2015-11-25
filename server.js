@@ -3,6 +3,7 @@
 var version = "0.1.1";
 
 var WebSocket  = require('ws').Server,
+    events     = require('events'),
     wss        = new WebSocket({port: 8080}),
     config     = require('./config.json'),
     settings   = require('./settings.json'),
@@ -15,7 +16,8 @@ var WebSocket  = require('ws').Server,
 var tcloud,
     gMeasures = [],
     gWeather = [],
-    gTimer1;
+    gTimer1,
+    emitter = new events.EventEmitter();
 
 var simulated = false,
     simFast = true;
@@ -46,6 +48,12 @@ const CMD_CONTROL1 = "ctl1";
 const CMD_CONTROL2 = "ctl2";
 const CMD_CONTROL3 = "ctl3";
 const CMD_LOGGING = "log1";
+
+const ACTION_CAR1 = "car1";
+const ACTION_CAR2 = "car2";
+const ACTION_LIGHT = "light";
+const ACTION_ROOM = "room";
+const ACTION_WEAT = "weather"
 
 if (simulated == false) {
     tcloud = new telldus.Telldus();
@@ -86,7 +94,8 @@ class MeasureData {
     else if (name == SENSORS_NAMES[1]) {
         this._temp2 = oneDecimal(parseFloat(value));
         
-        s.setval("TEMP", this._temp2);
+        if (simulated == false)
+            emitter.emit("temp", this._temp2);
     }
     else if (name == SENSORS_NAMES[2]) {
         this._humidity = oneDecimal(parseFloat(value));
@@ -252,14 +261,14 @@ function onWsMessage(message)
         arr.push("ok");
         settings.car1.hour = message[1];
         settings.car1.min = message[2];
-        car1.leave = parseTime(settings.car1);
+        s.setVal(ACTION_CAR1, "LEAVE", parseTime(settings.car1));
         break;
 
     case CMD_CONTROL2:
         arr.push("ok");
         settings.car2.hour = message[1];
         settings.car2.min = message[2];
-        car2.leave = parseTime(settings.car2);
+        s.setVal(ACTION_CAR2, "LEAVE", parseTime(settings.car2));
         break;
 
     case CMD_CONTROL3:
@@ -268,8 +277,9 @@ function onWsMessage(message)
         settings.lights_start.min = message[2];
         settings.lights_stop.hour = message[3];
         settings.lights_stop.min = message[4];
-        light.start = parseTime(settings.lights_start); 
-        light.stop = parseTime(settings.lights_stop); 
+
+        s.setVal(ACTION_LIGHT, "START", parseTime(settings.lights_start));
+        s.setVal(ACTION_LIGHT, "STOP",  parseTime(settings.lights_stop));
         break;
 
     default:
@@ -294,44 +304,40 @@ else {
   gTimer1 = setInterval(timer1simulated, 100);  // 1 sec
 }
 
-var weat = new sche.IntervalAction(60, 
-                                   sche.toClock2(gTime), 
-                                   function() {
+s.add(new sche.IntervalAction(ACTION_WEAT, emitter, 60, 
+                              sche.toClock2(gTime), 
+                              function() {
     log.normal("reading weather data");
     fmi.fmiRead(simulated, function(err,arr) {
-        console.log(arr[1]);
+        //console.log(arr[1]);
         gWeather = arr;
     });
-});
-s.add(weat);
+}));
 
-var car1 = new sche.CarHeaterAction(parseTime(settings.car1), function(state) {
+s.add(new sche.CarHeaterAction(ACTION_CAR1, emitter, parseTime(settings.car1), function(state) {
     log.history("CAR1 " + state); 
-});
-s.add(car1);
+}));
 
-var car2 = new sche.CarHeaterAction(parseTime(settings.car2), function(state) {
+s.add(new sche.CarHeaterAction(ACTION_CAR2, emitter, parseTime(settings.car2), function(state) {
     log.history("CAR2 " + state); 
-});
-s.add(car2);
+}));
 
-var light = new sche.RangeAction(parseTime(settings.lights_start),
+s.add(new sche.RangeAction(ACTION_LIGHT, emitter, parseTime(settings.lights_start),
                                  parseTime(settings.lights_stop), 
                                  function(state) {
     log.history("LIGHT " + state);  
-});
-s.add(light);
+}));
 
-var room = new sche.RoomHeaterAction(5.0, 10.0, function(state) {
+s.add(new sche.RoomHeaterAction(ACTION_ROOM, emitter, 5.0, 10.0, function(state) {
     log.history("ROOM " + state);
-})
-s.add(room);
+}));
+
 
 if (simulated == false) {
     s.start();
 }
 else {
-    s.setval("TEMP", -12.0);
+    emitter.emit("temp", -12.0);
 }
 wss.on('connection', function(ws) {
     ws.on('message', function(message) {
