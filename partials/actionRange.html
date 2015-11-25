@@ -1,11 +1,11 @@
 <form ng-submit="submit2(action.name)">
   <fieldset>
     <legend><b>{{action.name}}</b></legend>
-    <label for="startTime">Start</label>
-    <input type="time" name="start" ng-model="lightStart" step="300.0"><br>
+    <label for="start">Start</label>
+    <input type="time" name="start" ng-model="start" step="300.0"><br>
 
-    <label for="stopTime">Stop</label>
-    <input type="time" name="stop" ng-model="lightStop" step="300.0"><br><br>
+    <label for="stop">Stop</label>
+    <input type="time" name="stop" ng-model="stop" step="300.0"><br><br>
     <input type="submit" value="Save">
   </fieldset>
 </form>

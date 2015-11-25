@@ -68,12 +68,12 @@ function drawPie(ctrl, name, msg)
     chart.draw(data, options);
 }
 
-function drawLine(ctrl, name, data, parse)
+function drawLine(ctrl, name, msg, parse)
 {
     var resp2;
     
     if (parse === true) {
-        var resp = JSON.parse(data);
+        var resp = JSON.parse(msg);
         resp2 = resp.map(function(line) {
             if (line[0] === "time")
                 return line;
@@ -82,9 +82,9 @@ function drawLine(ctrl, name, data, parse)
         });
     }
     else {
-        resp2 = data;
+        resp2 = msg;
     }
-    var vdata = google.visualization.arrayToDataTable(resp2);
+    var data = google.visualization.arrayToDataTable(resp2);
     var options = { title: name,
                     curveType: 'none',
                     hAxis: { format: 'HH:mm' },
@@ -92,10 +92,10 @@ function drawLine(ctrl, name, data, parse)
                   };
 
     var formatter = new google.visualization.DateFormat({pattern: 'HH:mm'});
-    formatter.format(vdata, 1);
+    formatter.format(data, 1);
 
     var chart = new google.visualization.LineChart(document.getElementById(ctrl));
-    chart.draw(vdata, options);
+    chart.draw(data, options);
 }
 
 function drawTable(ctrl, name, msg)
@@ -283,8 +283,7 @@ app.controller('ActController', ['$scope', function ($scope) {
     $scope.actions = [{name:"Car1",       url:"partials/actionCar.html"},
                       {name:"Car2",       url:"partials/actionCar.html"},
                       {name:"Interval",   url:"partials/actionInterval.html"},
-                      {name:"Range",      url:"partials/actionRange.html"},
-                      
+                      {name:"Range",      url:"partials/actionRange.html"},                  
     ];
     
     $scope.action = $scope.actions[0];
@@ -314,39 +313,6 @@ fieldset {
   border: solid 1px grey;
   background-color: lightgrey;
   margin: 2px;
-}
-
-.slide-animate-container {
-  position:relative;
-  background:white;
-  border:1px solid black;
-  height:40px;
-  overflow:hidden;
-}
-.slide-animate {
-  padding:10px;
-}
-.slide-animate.ng-enter, .slide-animate.ng-leave {
-  transition:all cubic-bezier(0.250, 0.460, 0.450, 0.940) 0.5s;
-  position:absolute;
-  top:0;
-  left:0;
-  right:0;
-  bottom:0;
-  display:block;
-  padding:10px;
-}
-.slide-animate.ng-enter {
-  top:-50px;
-}
-.slide-animate.ng-enter.ng-enter-active {
-  top:0;
-}
-.slide-animate.ng-leave {
-  top:0;
-}
-.slide-animate.ng-leave.ng-leave-active {
-  top:50px;
 }
 </style>
 </head>
