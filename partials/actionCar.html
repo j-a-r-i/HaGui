@@ -1,0 +1,15 @@
+<form ng-submit="submit2(action.name)">
+  <fieldset>
+    <legend><b>{{action.name}}</b></legend>
+    <label for="time">Leaving</label>
+    <input type="time" name="time" ng-model="leave" step="300.0"><br><br>
+    <input type="checkbox" name="mon" value="" checked>Mon
+    <input type="checkbox" name="tue" value="" checked>Tue
+    <input type="checkbox" name="wed" value="" checked>Wed
+    <input type="checkbox" name="thu" value="" checked>Thu
+    <input type="checkbox" name="fri" value="" checked>Fri
+    <input type="checkbox" name="sat" value="">Sun
+    <input type="checkbox" name="sun" value="">Sat<br><br>
+    <input type="submit" value="Save">
+  </fieldset>
+</form>

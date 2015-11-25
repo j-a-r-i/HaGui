@@ -1,0 +1,7 @@
+<div ng-controller="ActController">
+	<select ng-model="action" ng-options="a.name for a in actions">
+	</select>
+  <div>
+    <div ng-include="action.url"></div>
+  </div>
+</div>
