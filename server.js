@@ -17,6 +17,8 @@ var tcloud,
     gMeasures = [],
     gWeather = [],
     gTimer1,
+    gLights = null,
+    gCar1 = null,
     emitter = new events.EventEmitter();
 
 var simulated = false,
@@ -63,6 +65,8 @@ if (simulated == false) {
             log.error(err);
         }
         else {
+            gLights = tcloud.getDevice("valot1");
+            gCar1   = tcloud.getDevice("auto1");
             Promise.all([tcloud.sensor(0), tcloud.sensor(1)]).then((values) => {
                 item.time = new Date();              
                 values.forEach((i) => {
@@ -315,7 +319,9 @@ s.add(new sche.IntervalAction(ACTION_WEAT, emitter, 60,
 }));
 
 s.add(new sche.CarHeaterAction(ACTION_CAR1, emitter, parseTime(settings.car1), function(state) {
-    log.history("CAR1 " + state); 
+    log.history("CAR1 " + state);
+    if (gCar1) 
+        tcloud.power(gCar1, state).then();
 }));
 
 s.add(new sche.CarHeaterAction(ACTION_CAR2, emitter, parseTime(settings.car2), function(state) {
@@ -325,7 +331,9 @@ s.add(new sche.CarHeaterAction(ACTION_CAR2, emitter, parseTime(settings.car2), f
 s.add(new sche.RangeAction(ACTION_LIGHT, emitter, parseTime(settings.lights_start),
                                  parseTime(settings.lights_stop), 
                                  function(state) {
-    log.history("LIGHT " + state);  
+    log.history("LIGHT " + state);
+    if (gLights) 
+        tcloud.power(gLights, state);
 }));
 
 s.add(new sche.RoomHeaterAction(ACTION_ROOM, emitter, 5.0, 10.0, function(state) {

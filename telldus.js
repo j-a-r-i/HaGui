@@ -49,6 +49,17 @@ class Telldus
         });       
     }
     
+    getDevice(name) {
+        var ret = null;
+        
+        this._devices.forEach((d) => {
+            if (d.name == name) {
+                ret = d;
+            }
+        });
+        return ret;
+    }
+    
     power(device, state)
     {
         var self = this;

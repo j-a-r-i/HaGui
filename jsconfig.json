@@ -10,6 +10,7 @@
 		"scheduler.js",
 		"info.js",
 		"telldus.js",
+		"telldusApi.js",
 		"test6.js"
 	]
 }
