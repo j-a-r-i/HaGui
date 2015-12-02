@@ -6,6 +6,7 @@ def addFile(fname):
     print(fname)
     fout.write('<script type="text/ng-template" id="' + fname + '">\n')
     for line in open(fname).readlines():
+        line = line.replace("\r\n", "\n")
         fout.write(line)
     fout.write('</script>\n')
         

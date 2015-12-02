@@ -79,7 +79,7 @@ function parseXml(buf, cb)
         n = n['gml:DataBlock'][0];
         n = n['gml:doubleOrNilReasonTupleList'][0];
         
-        arr = n.split("\n");
+        arr = n.trim().split("\n");
         
         arr = arr.map(function(i) { 
             i = i.trim();
@@ -97,7 +97,7 @@ function parseXml(buf, cb)
         d = d['gmlcov:SimpleMultiPoint'][0];
         d = d['gmlcov:positions'][0];
         
-        var arr2 = d.split("\n");
+        var arr2 = d.trim().split("\n");
         arr2 = arr2.map(function(i) { 
             i = i.trim();
             if (i.length === 0)
