@@ -50,6 +50,7 @@ const CMD_CONTROL1 = "ctl1";
 const CMD_CONTROL2 = "ctl2";
 const CMD_CONTROL3 = "ctl3";
 const CMD_LOGGING = "log1";
+const CMD_SCHEDULERS = "sche1";
 
 const ACTION_CAR1 = "car1";
 const ACTION_CAR2 = "car2";
@@ -223,11 +224,12 @@ function parseTime(name)
 
 function onWsMessage(message)
 {
+    var resp = { cmd: message.cmd }  
     var arr = [];
 
-    log.normal("Executing " + message[0]);
+    log.normal("Executing " + message.cmd);
     
-    switch (message[0]) {
+    switch (message.cmd) {
     case CMD_DATA1:
         arr.push(['time', 't1', 't2']);       
         gMeasures.forEach( function(item) {
@@ -254,45 +256,57 @@ function onWsMessage(message)
         break;
 
     case CMD_STATUS:
-        arr.push(version);
-        arr.push(info.loadavg());
-        arr.push(info.meminfo());
-        arr.push(log.getErrors());
-        arr.push(log.getHistory());
+        resp.ver = version;
+        resp.load = info.loadavg();
+        resp.mem = info.meminfo();
+        resp.errors = log.getErrors();
+        resp.history = log.getHistory();
         break;
         
     case CMD_CONTROL1:
-        arr.push("ok");
-        settings.car1.hour = message[1];
-        settings.car1.min = message[2];
+        settings.car1.hour = message.arg[0];
+        settings.car1.min = message.arg[1];
         s.setVal(ACTION_CAR1, "LEAVE", parseTime(settings.car1));
         break;
 
     case CMD_CONTROL2:
-        arr.push("ok");
-        settings.car2.hour = message[1];
-        settings.car2.min = message[2];
+        settings.car2.hour = message.arg[0];
+        settings.car2.min = message.arg[1];
         s.setVal(ACTION_CAR2, "LEAVE", parseTime(settings.car2));
         break;
 
     case CMD_CONTROL3:
-        arr.push("ok");
-        settings.lights_start.hour = message[1];
-        settings.lights_start.min = message[2];
-        settings.lights_stop.hour = message[3];
-        settings.lights_stop.min = message[4];
+        settings.lights_start.hour = message.arg[0];
+        settings.lights_start.min = message.arg[1];
+        settings.lights_stop.hour = message.arg[2];
+        settings.lights_stop.min = message.arg[3];
 
         s.setVal(ACTION_LIGHT, "START", parseTime(settings.lights_start));
         s.setVal(ACTION_LIGHT, "STOP",  parseTime(settings.lights_stop));
         break;
 
+    case CMD_SCHEDULERS:
+        //resp.items = ['one', 'two', 'three'];
+        var lst = [];
+        s._actions.forEach((a) => {
+            var i = {};
+            i.name = a.name;
+            i.values = a.strings();
+            lst.push(i);
+        });
+        resp.items = lst;
+        break;
+        
     default:
-        arr.push("unknown command");
+        resp.error = "unknown command";
         log.error("unknown command: " + message);
         break;
     }
 
-    return arr;
+    if (arr.length > 0)
+        resp.data = arr;
+
+    return resp;
 }
 
 var gTime = new Date();
@@ -306,6 +320,9 @@ if (simulated == false) {
 }
 else {
   gTimer1 = setInterval(timer1simulated, 100);  // 1 sec
+  fmi.fmiRead(simulated, function(err,arr) {
+      gWeather = arr;
+  });
 }
 
 s.add(new sche.IntervalAction(ACTION_WEAT, emitter, 60, 

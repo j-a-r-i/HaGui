@@ -2,22 +2,22 @@
     <div ng-controller="HaController">
     <form action = "">
        <fieldset>
-        <button type = "button"
+        <!--button type = "button"
                 onclick = "connect()">
           connect
-        </button>
+        </button -->
          <button type = "button"
-                onclick = "send('cmd1')">
-          Chart1
+                onclick = "updateCharts()">
+          Charts
         </button>
         <button type = "button"
-                onclick = "send('cmd4')">
+                onclick = "updateWeather()">
           Weather
         </button>
-        <button type = "button"
+        <!--button type = "button"
                 onclick = "websocket.close()">
           disconnect
-        </button>
+        </button -->
       </fieldset>
     </form>
     </div>

@@ -1,0 +1,8 @@
+<br>
+<div class="container">
+  <div ng-repeat="item in items">
+	<h3>{{item.name}}</h3>
+	<ul>
+		<li ng-repeat="val in item.values"><b>{{val.name}}</b>: {{conv(val.name, val.value)}}</li>
+	</ul>	
+</div>

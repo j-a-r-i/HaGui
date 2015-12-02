@@ -6,14 +6,13 @@
 <script src="https://www.google.com/jsapi" type="text/javascript"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular-route.min.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/q.js/0.9.2/q.js"></script>
 <script language="javascript" type="text/javascript">
 var wsUri = "ws://192.168.100.40:8080/";
 //var wsUri = "ws://localhost:8080/";
 var output;
-var cmd = "";
 var stat = null;
-var doCmd2 = false;
-var doCmd3 = false;
+var callbacks = {};
 
 const CMD_DATA1 ="cmd1";
 const CMD_DATA2 ="cmd2";
@@ -25,6 +24,8 @@ const CMD_CONTROL1 = "ctl1";
 const CMD_CONTROL2 = "ctl2";
 const CMD_CONTROL3 = "ctl3";
 const CMD_LOGGING = "log1";
+const CMD_SCHEDULERS = "sche1";
+
 
 google.load("visualization", "1", {packages:["corechart","table"]});
 
@@ -43,20 +44,49 @@ function connect()
     websocket.onerror = onError;
 }
 
+function updateWeather()
+{
+    send(CMD_WEATHER, {})
+    .then(function(msg) {
+        var arr = [["Time", "Temp"]];
+        var data = msg.data;
+        data.forEach(function(i) {
+           if (i != null) {
+               arr.push([new Date(i.date), parseFloat(i.temp)]);
+           } 
+        });
+        drawLine("chart4", "Forecast", arr, false);
+    });
+}
+
+
+function updateCharts()
+{
+    send(CMD_DATA1, {})
+    .then(function (msg) {
+        console.log(msg);
+        drawLine("chart1", "Temperature", msg.data, true);
+        return send(CMD_DATA2, {});
+    })
+    .then(function (msg) {
+        console.log(msg);
+        drawLine("chart2", "Humidity", msg.data, true);
+        return send(CMD_DATA3, {});
+    })
+    .then(function (msg) {
+        drawTable("chart3", "None", msg.data, true);
+        console.log(data);               
+    })
+}
+
 function onOpen(evt)
 {
-    //writeToScreen("CONNECTED");
-
-    doCmd2 = true;
-    doCmd3 = true;
-    send(CMD_DATA1);
+    updateCharts();
 }
 
 function onClose(evt)
 {
-    //writeToScreen("DISCONNECTED");
 }
-
 
 function drawPie(ctrl, name, msg)
 {
@@ -73,8 +103,7 @@ function drawLine(ctrl, name, msg, parse)
     var resp2;
     
     if (parse === true) {
-        var resp = JSON.parse(msg);
-        resp2 = resp.map(function(line) {
+        resp2 = msg.map(function(line) {
             if (line[0] === "time")
                 return line;
             line[0] = new Date(line[0]);
@@ -100,61 +129,21 @@ function drawLine(ctrl, name, msg, parse)
 
 function drawTable(ctrl, name, msg)
 {
-    var resp = JSON.parse(msg);
-    var data = google.visualization.arrayToDataTable(resp);
+    var data = google.visualization.arrayToDataTable(msg);
     var options = { showRowNumber: true,
 		            legend: 'none'};
     var table = new google.visualization.Table(document.getElementById(ctrl));
     table.draw(data, options);
 }
 
-
 function onMessage(evt)
 {
     //writeToScreen('<span style="color: blue;">'+cmd+': ' + JSON.stringify(resp)+'</span>');
-    switch (cmd) {
-    case CMD_DATA1:
-       drawLine("chart1", "Temperature", evt.data, true);
-	   if (doCmd2)
-	        send(CMD_DATA2);
-	   break;
-
-    case CMD_DATA2:
-        drawLine("chart2", "Humidity", evt.data, true);
-        if (doCmd3)
-            send(CMD_DATA3);
-        break;
-
-    case CMD_DATA3:
-        drawTable("chart3", "None", evt.data, true);
-    	break;
-
-    case CMD_WEATHER:
-        var arr = [["Time", "Temp"]];
-        var data = JSON.parse(evt.data);
-        data.forEach(function(i) {
-           if (i != null) {
-               arr.push([new Date(i.date), parseFloat(i.temp)]);
-           } 
-        });
-        drawLine("chart4", "Forecast", arr, false);
-    	break;
-
-    case 'cmd5':
-        drawTable("chart5", "None", evt.data, false);
-    	break;
-	
-    case CMD_STATUS:
-        alert(evt.data);
-        break;
-        
-    case CMD_CONTROL:
-        break;
+    var msg = JSON.parse(evt.data);
     
-    default:
-        writeToScreen('<span style="color: blue;">RESPONSE: ' + evt.data+'</span>');
-        alert('Unknown command:' + cmd + '\n' + evt.data);
-    	break;
+    if (callbacks.hasOwnProperty(msg.cmd)) {
+        callbacks[msg.cmd].defer.resolve(msg);
+        delete callbacks[msg.cmd];
     }
 }
 
@@ -163,30 +152,18 @@ function onError(evt)
     writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data);
 }
 
-function send(command)
+function send(command, request)
 {
-/*    if (args === undefined) {
-        args = [];
-    }
-    //writeToScreen("SENT: " + message);
-    var msg = [command].concat(args);
-*/    
-    var msg = [command];
-    cmd = command;
-    websocket.send(JSON.stringify(msg));
-}
+    var deferred = Q.defer();
+    
+    callbacks[command] = {
+        defer: deferred
+    };
+    
+    request.cmd = command;
 
-function send2(command, args)
-{
-/*    if (args === undefined) {
-        args = [];
-    }
-    //writeToScreen("SENT: " + message);
-    var msg = [command].concat(args);
-*/    
-    var msg = [command].concat(args);
-    cmd = command;
-    websocket.send(JSON.stringify(msg));
+    websocket.send(JSON.stringify(request));
+    return deferred.promise;
 }
 
 
@@ -226,6 +203,10 @@ app.config(function($routeProvider) {
 	        controller: 'ActController',
 	        templateUrl: 'partials/actEditor.html'
         })
+        .when('/schedulers', {
+	        controller: 'ScheController',
+	        templateUrl: 'partials/schedulers.html'
+        })
         .otherwise({ redirecTo: '/' });
 });
 
@@ -257,13 +238,15 @@ app.controller('HaCtrlController', ['$scope', function ($scope) {
     $scope.submit1 = function() {
         var date = new Date($scope.car1Leave);
 
-        send2(CMD_CONTROL1, [date.getHours(), date.getMinutes()]);
+        send(CMD_CONTROL1, {hour: date.getHours(), 
+                            min: date.getMinutes()});
         console.log("CAR1 :" + $scope.car1Leave);
     };
     $scope.submit2 = function() {
         var date = new Date($scope.car2Leave);
 
-        send2(CMD_CONTROL2, [date.getHours(), date.getMinutes()]);
+        send(CMD_CONTROL2, {hour: date.getHours(), 
+                            min: date.getMinutes()});
         console.log("CAR2 :" + $scope.car2Leave);
     };
     $scope.submit3 = function() {
@@ -275,7 +258,7 @@ app.controller('HaStatController', ['$scope', function ($scope) {
     
     $scope.update = function() {
         stat = $scope;
-        send(CMD_STATUS);  
+        send(CMD_STATUS, {});  
     };
 }]);
 
@@ -289,6 +272,24 @@ app.controller('ActController', ['$scope', function ($scope) {
     $scope.action = $scope.actions[0];
 }]);
 
+app.controller('ScheController', ['$scope', function($scope) {
+    var s = $scope;
+    send(CMD_SCHEDULERS, {})
+    .then(function(msg) {
+        $scope.items = msg.items;
+        $scope.$apply();
+    });
+
+    $scope.conv = function(name, val) {
+        if (name.indexOf("Time") > 0) {
+            var hours = Math.floor(val / 60);
+            var mins  = val % 60;
+            
+            return "" + hours + ":" + mins;
+        }
+        return val;
+    }
+}]);
 
 //------------------------------------------------------------------------------
 </script>
@@ -325,10 +326,10 @@ fieldset {
         <button type="button" onclick="location.href='#/status'">Status</button>
         <button type="button" onclick="location.href='#/config'">Config</button>
         <button type="button" onclick="location.href='#/actions'">Actions</button>
+        <button type="button" onclick="location.href='#/schedulers'">Schedulers</button>
       </fieldset>
     </form>
   </div>
   <div ng-view></div>
   <!-- GENERATE_VIEWS -->  
 </body>
-

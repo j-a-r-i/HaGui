@@ -33,6 +33,38 @@ class Action {
 		return this._name;
 	}
 	
+	/*strings()
+	{
+		var ret = [];
+		
+		this._exports.forEach((i) => {
+			ret.push( (i + ":") + this[i] );
+		});
+		
+		return ret;
+	}*/
+	strings()
+	{
+		var ret = [];
+		
+		this._exports.forEach((i) => {
+			ret.push( { name: i,
+						value: this[i]});
+		});		
+		return ret;
+	}
+
+	values()
+	{
+		var ret = {};
+		
+		this._exports.forEach((i) => {
+			ret[i] = this[i];
+		});
+		
+		return ret;
+	}
+	
 	dump()
 	{
 		var out = this._name;
@@ -50,9 +82,9 @@ class Action {
 class RangeAction extends Action {
 	constructor(aname, emitter, astart, astop, func)
 	{
-		super(aname, ['start', 'stop']);
-		this.start = astart;
-		this.stop = astop;
+		super(aname, ['startTime', 'stopTime']);
+		this.startTime = astart;
+		this.stopTime = astop;
 		this._active = false;
 		this._callback = func;
 	}
@@ -61,20 +93,20 @@ class RangeAction extends Action {
 	{
 		switch (name) {
 		case "START":
-			this.start = value;
+			this.startTime = value;
 			break;
 		case "STOP":
-			this.stop = value;
+			this.stopTime = value;
 			break;	
 		}
 	}
 	
 	tick(clock)
 	{
-		if (clock < this.start) {
+		if (clock < this.startTime) {
 			// do nothing
 		}
-		else if (clock < this.stop) {
+		else if (clock < this.stopTime) {
 			if (!this._active) {
 				this._callback(1);
 				this._active = true;
@@ -87,19 +119,14 @@ class RangeAction extends Action {
 			}
 		}
 	}
-	
-	print()
-	{
-		console.log("action " + this.start + " - " + this.stop);
-	}
 }
 
 //-----------------------------------------------------------------------------
 class IntervalAction extends Action {
-	constructor(aname, emitter, interval, initialClock, func)
+	constructor(aname, emitter, ainterval, initialClock, func)
 	{
-		super(aname, []);
-		this._interval = interval;
+		super(aname, ['interval']);
+		this.interval = ainterval;
 		this._callback = func;
 		this._started = initialClock + this._interval;
 	}
