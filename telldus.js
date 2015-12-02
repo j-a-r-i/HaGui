@@ -64,7 +64,7 @@ class Telldus
     {
         var self = this;
         return new Promise((resolve,reject) => {
-            self._cloud.onOffDevice(self._devices[device], state, function(err, result) {
+            self._cloud.onOffDevice(device, state, function(err, result) {
                 if (!!err)
                     return reject(err);
                 resolve(result);
