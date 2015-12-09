@@ -267,13 +267,13 @@ function onWsMessage(message)
     case CMD_CONTROL1:
         settings.car1.hour = message.arg[0];
         settings.car1.min = message.arg[1];
-        s.setVal(ACTION_CAR1, "LEAVE", parseTime(settings.car1));
+        s.setVal(ACTION_CAR1, "leaveTime", parseTime(settings.car1));
         break;
 
     case CMD_CONTROL2:
         settings.car2.hour = message.arg[0];
         settings.car2.min = message.arg[1];
-        s.setVal(ACTION_CAR2, "LEAVE", parseTime(settings.car2));
+        s.setVal(ACTION_CAR2, "leaveTime", parseTime(settings.car2));
         break;
 
     case CMD_CONTROL3:
@@ -282,8 +282,8 @@ function onWsMessage(message)
         settings.lights_stop.hour = message.arg[2];
         settings.lights_stop.min = message.arg[3];
 
-        s.setVal(ACTION_LIGHT, "START", parseTime(settings.lights_start));
-        s.setVal(ACTION_LIGHT, "STOP",  parseTime(settings.lights_stop));
+        s.setVal(ACTION_LIGHT, "startTime", parseTime(settings.lights_start));
+        s.setVal(ACTION_LIGHT, "stopTime",  parseTime(settings.lights_stop));
         break;
 
     case CMD_SCHEDULERS:

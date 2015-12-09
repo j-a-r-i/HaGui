@@ -33,6 +33,10 @@ class Action {
 		return this._name;
 	}
 	
+    setVal(name, val)
+	{
+		this[name] = val;
+	}
 	/*strings()
 	{
 		var ret = [];
@@ -88,19 +92,7 @@ class RangeAction extends Action {
 		this._active = false;
 		this._callback = func;
 	}
-	
-	setval(name, value)
-	{
-		switch (name) {
-		case "START":
-			this.startTime = value;
-			break;
-		case "STOP":
-			this.stopTime = value;
-			break;	
-		}
-	}
-	
+
 	tick(clock)
 	{
 		if (clock < this.startTime) {
@@ -125,28 +117,23 @@ class RangeAction extends Action {
 class IntervalAction extends Action {
 	constructor(aname, emitter, ainterval, initialClock, func)
 	{
-		super(aname, ['interval']);
+		super(aname, ['interval', '_startedTime']);
 		this.interval = ainterval;
 		this._callback = func;
-		this._started = initialClock + this._interval;
+		this._startedTime = initialClock + this._interval;
 	}
 
-	setval(name, value)
-	{
-	}
-	
 	tick(clock)
 	{
-		if (clock > 800 && this._started < 100)  // handle 24 -> 0 transition
+		if (clock > 800 && this._startedTime < 100)  // handle 24 -> 0 transition
 			return;
-			
-			
-		if (clock >= this._started) {
+	
+		if (clock >= this._startedTime) {
 			this._callback();
-			this._started = clock + this._interval;
-			if (this._started > 24*60) {
+			this._startedTime = clock + this._interval;
+			if (this._startedTime > 24*60) {
 				//console.log("too large clock value!");
-				this._started -= 24*60;
+				this._startedTime -= 24*60;
 			}		
 		}
 	}
@@ -161,8 +148,7 @@ class CarHeaterAction extends Action {
 		this._callback = func;
 		this._temp = 0;
 		this._active = false;
-		
-		
+			
 		var self = this;
 		emitter.on("temp", (temp) => {
 			self._temp = temp;
@@ -173,16 +159,7 @@ class CarHeaterAction extends Action {
 	{
 		this.leaveTime = leaveTime;
 	}
-	
-	setval(name, value)
-	{
-		switch (name) {
-		case "LEAVE":
-			this.leaveTime = value;
-			break;
-		}
-	}
-	
+
 	calcStarting()
 	{
 		var sTime = 60;
@@ -257,11 +234,7 @@ class RoomHeaterAction extends Action {
 			this._active = false;				
 		}		
 	}
-	
-	setval(name, value)
-	{
-	}
-	
+
 	tick(clock)
 	{
 		// todo: ensure heater is on/off after some time is activated/deactivated
@@ -304,11 +277,10 @@ class Scheduler {
 	{
 		this._actions.forEach(function(act) {
 			if (act.name === action) {
-				act.setval(sname, value)
+				act.setVal(sname, value)
 			}
 		});				
 	}
-
 
 	onTimer(self)
 	{
