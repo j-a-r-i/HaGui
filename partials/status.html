@@ -1,8 +1,15 @@
 <br>
 <div class="container">
   <div ng-controller="HaStatController">
+    <p><b>Version {{ver}}</b>
+    </p>
+    <h4>Errors</h4>
     <ul>
-      <li ng-repeat="item in data">{{item}}</li>
+      <li ng-repeat="item in errors">{{item}}</li>
+    </ul>
+    <h4>History</h4>
+    <ul>
+      <li ng-repeat="item in history">{{item}}</li>
     </ul>
   </div>
 </div>

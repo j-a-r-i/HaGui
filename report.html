@@ -254,7 +254,13 @@ app.controller('HaCtrlController', ['$scope', function ($scope) {
 }]);
 
 app.controller('HaStatController', ['$scope', function ($scope) {
-    $scope.data = ["<empty"];
+    send(CMD_STATUS, {})
+    .then(function(msg) {
+        $scope.ver = msg.ver;
+        $scope.data = msg.errors;
+        $scope.history = msg.history;
+        $scope.$apply();
+    });
     
     $scope.update = function() {
         stat = $scope;
@@ -273,7 +279,6 @@ app.controller('ActController', ['$scope', function ($scope) {
 }]);
 
 app.controller('ScheController', ['$scope', function($scope) {
-    var s = $scope;
     send(CMD_SCHEDULERS, {})
     .then(function(msg) {
         $scope.items = msg.items;
