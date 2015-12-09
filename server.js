@@ -55,6 +55,7 @@ const CMD_SCHEDULERS = "sche1";
 const ACTION_CAR1 = "car1";
 const ACTION_CAR2 = "car2";
 const ACTION_LIGHT = "light";
+const ACTION_LIGHT2 = "light2";
 const ACTION_ROOM = "room";
 const ACTION_WEAT = "weather"
 
@@ -321,7 +322,12 @@ if (simulated == false) {
 else {
   gTimer1 = setInterval(timer1simulated, 100);  // 1 sec
   fmi.fmiRead(simulated, function(err,arr) {
-      gWeather = arr;
+      if (err) {
+          log.error(err);
+      }
+      else {
+        gWeather = arr;
+      }
   });
 }
 
@@ -330,8 +336,12 @@ s.add(new sche.IntervalAction(ACTION_WEAT, emitter, 60,
                               function() {
     log.normal("reading weather data");
     fmi.fmiRead(simulated, function(err,arr) {
-        //console.log(arr[1]);
-        gWeather = arr;
+        if (err) {
+            log.error(err);
+        }
+        else {
+            gWeather = arr;
+        }
     });
 }));
 
@@ -349,6 +359,14 @@ s.add(new sche.RangeAction(ACTION_LIGHT, emitter, parseTime(settings.lights_star
                                  parseTime(settings.lights_stop), 
                                  function(state) {
     log.history("LIGHT " + state);
+    if (gLights) 
+        tcloud.power(gLights, state);
+}));
+
+s.add(new sche.RangeAction(ACTION_LIGHT2, emitter, parseTime(settings.lights2_start),
+                                 parseTime(settings.lights2_stop), 
+                                 function(state) {
+    log.history("LIGHT2 " + state);
     if (gLights) 
         tcloud.power(gLights, state);
 }));

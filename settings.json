@@ -14,5 +14,13 @@
 	"lights_stop": {
 		"hour": "21",
 		"min": "30"
+	},
+	"lights2_start": {
+		"hour": "7",
+		"min": "40"
+	},
+	"lights2_stop": {
+		"hour": "10",
+		"min": "00"
 	}
 }

@@ -66,14 +66,22 @@ function parseXml(buf, cb)
     
     parser(buf, function(err, result) {
         if (err)
-            return console.log(err);
-        //findKey(result, "gmlcov:MultiPointCoverage");
+            cb(err, null);
+
         var d;
-        var n = result['wfs:FeatureCollection'];
-        n = n['wfs:member'][0];
-        n = n['omso:GridSeriesObservation'][0];
-        n = n['om:result'][0];
-        n = n['gmlcov:MultiPointCoverage'][0];
+        var n = result;
+        var path = ['wfs:FeatureCollection',
+                    'wfs:member',
+                    'omso:GridSeriesObservation',
+                    'om:result',
+                    'gmlcov:MultiPointCoverage'];
+                    
+        for (let i=0; i<path.length; i++) {
+            n = n[path[i]][0];
+            if (n == null) 
+                return cb("Invalid XML", null);
+        }
+        
         d = n['gml:domainSet'][0];
         n = n['gml:rangeSet'][0];
         n = n['gml:DataBlock'][0];
@@ -115,7 +123,7 @@ function parseXml(buf, cb)
         }
         //console.log(arr.length + " , " +  arr2.length);
     });
-    return arr;
+    cb(null, arr);
 }
 
 //-----------------------------------------------------------------------------
@@ -138,8 +146,7 @@ function fmiRead(simulated, cb)
                 }
                 console.log("wfs.xml was saved!");
             });*/
-            
-            cb(null, parseXml(html));
+            parseXml(html, cb);
         });
     }
 }
