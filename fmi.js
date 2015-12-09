@@ -77,7 +77,10 @@ function parseXml(buf, cb)
                     'gmlcov:MultiPointCoverage'];
                     
         for (let i=0; i<path.length; i++) {
-            n = n[path[i]][0];
+            if (i===0)
+                n = n[path[i]];
+            else
+                n = n[path[i]][0];
             if (n == null) 
                 return cb("Invalid XML", null);
         }

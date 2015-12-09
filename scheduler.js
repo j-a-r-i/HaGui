@@ -120,7 +120,7 @@ class IntervalAction extends Action {
 		super(aname, ['interval', '_startedTime']);
 		this.interval = ainterval;
 		this._callback = func;
-		this._startedTime = initialClock + this._interval;
+		this._startedTime = initialClock; // + this._interval;
 	}
 
 	tick(clock)
@@ -130,7 +130,8 @@ class IntervalAction extends Action {
 	
 		if (clock >= this._startedTime) {
 			this._callback();
-			this._startedTime = clock + this._interval;
+			//console.log("set started time:" + (clock + this.interval))
+			this._startedTime = clock + this.interval;
 			if (this._startedTime > 24*60) {
 				//console.log("too large clock value!");
 				this._startedTime -= 24*60;

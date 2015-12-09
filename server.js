@@ -1,6 +1,6 @@
 "use strict";
 
-var version = "0.1.1";
+var version = "0.1.2";
 
 var WebSocket  = require('ws').Server,
     events     = require('events'),
@@ -314,6 +314,7 @@ var gTime = new Date();
 var s = new sche.Scheduler();
 
 log.history("HaGUI V" + version);
+log.history("time: " + sche.toClock2(gTime));
 
 //--------------------------------------------------------------------------------
 if (simulated == false) {

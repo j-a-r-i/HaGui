@@ -1,8 +1,19 @@
 <br>
 <div class="container">
   <div ng-repeat="item in items">
-	<h3>{{item.name}}</h3>
-	<ul>
-		<li ng-repeat="val in item.values"><b>{{val.name}}</b>: {{conv(val.name, val.value)}}</li>
-	</ul>	
+	<form ng-submit="submit({{item.name}})" ng-controller="ScheController">
+  	<fieldset>
+      <legend><b>{{item.name}}</b></legend>
+      <div ng-repeat="val in item.values">
+        <!--label for="{{val.name}}">{{val.name}}</label-->
+        <b>{{val.name}}</b>
+        <input type="time" name="{{val.name}}" ng-model="{{item.name}}.{{val.name}}" step="300.0"><br>
+      </div>
+    <input type="submit" value="Save">
+    </fieldset>
+	  <ul>
+	    <li ng-repeat="val in item.values"><b>{{val.name}}</b>: {{conv(val.name, val.value)}}</li>
+	  </ul>	
+  </form>
+  </div>
 </div>
