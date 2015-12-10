@@ -21,7 +21,7 @@ var tcloud,
     gCar1 = null,
     emitter = new events.EventEmitter();
 
-var simulated = false,
+var simulated = true,
     simFast = true;
 
 const SENSORS_NAMES = ["ulko.temp",
@@ -168,9 +168,9 @@ function simOffset(value, min, max)
     var offset = random(-0.5, 0.5);
 
     if (value < min)
-	offset = Math.abs(offset);
+	   offset = Math.abs(offset);
     if (value > max)
-	offset = -Math.abs(offset);
+	   offset = -Math.abs(offset);
     return offset;
 }
 
@@ -178,7 +178,6 @@ function simOffset(value, min, max)
 function timer1simulated()
 {
     gTime.setMinutes(gTime.getMinutes() + 10);
-    //gTime = new Date();
     
     item.time = new Date(gTime);
     simData.forEach(function(data) {
@@ -381,6 +380,7 @@ if (simulated == false) {
     s.start();
 }
 else {
+    s.genHtml();
     emitter.emit("temp", -12.0);
 }
 wss.on('connection', function(ws) {

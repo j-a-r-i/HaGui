@@ -1,5 +1,7 @@
 "use strict";
 
+var fs = require('fs');
+
 //-----------------------------------------------------------------------------
 function clock(hour,min)
 {
@@ -288,6 +290,25 @@ class Scheduler {
 		var c = clock2(new Date());
 		//console.log("<timer2>");
 		self.tick(c);
+	}
+	
+	genHtml()
+	{
+		var fout = fs.createWriteStream('partials/config2.html');
+		this._actions.forEach(function(act) {
+			fout.write('<form ng-submit="submit1(\''+act.name+'\')" ng-controller="HaCtrlController">\n');
+			fout.write('  <fieldset>\n');
+			fout.write('    <legend><b>'+act.name+'</b></legend>\n');
+			act._exports.forEach((name) => {
+				fout.write('    <label for="'+name+'">'+name+'</label>\n');
+				fout.write('    <input type="time" name="'+name+'" ng-model="'+name+'" step="300.0"><br>\n');
+			})
+			fout.write('    <br>\n');
+			fout.write('    <input type="submit" value="Save">\n');
+			fout.write('  </fieldset>\n');
+			fout.write('</form>\n');
+		});
+		fout.end();
 	}
 }
 
