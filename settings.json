@@ -1,26 +1,23 @@
 {
 	"car1": {
-		"hour": "7",
-		"min": "30"
+		"leaveTime" : [ 7, 30]
 	},
 	"car2": {
-		"hour": "8",
-		"min": "15"
+		"leaveTime" : [ 8, 15]
 	},
-	"lights_start": {
-		"hour": "16",
-		"min": "30"
+	"light": {
+		"startTime": [16 , 30],
+		"stopTime":  [21, 30]
 	},
-	"lights_stop": {
-		"hour": "21",
-		"min": "30"
+	"light2" : {
+		"startTime": [7, 40],
+		"stopTime":  [10, 0]
 	},
-	"lights2_start": {
-		"hour": "7",
-		"min": "40"
+	"room" : {
+		"lowTemp": 5.0,
+		"highTemp": 10.0
 	},
-	"lights2_stop": {
-		"hour": "10",
-		"min": "00"
+	"weather" : {
+		"interval": 60
 	}
 }

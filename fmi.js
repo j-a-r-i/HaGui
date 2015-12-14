@@ -1,5 +1,7 @@
 "use strict";
-
+/*
+ * Copyright (C) 2015 Jari Ojanen
+ */
 // http://ilmatieteenlaitos.fi/tallennetut-kyselyt
 
 var fs = require("fs");
@@ -30,13 +32,6 @@ function read(url, callback)
 	    callback(null, body);
         });
     });
-    /* old implementation using request module
-      request(url, function(err, response, html) {
-        if (!!err) {
-            return callback(err, html);
-        }
-        callback(null, html);
-    });*/
 }
 
 //-----------------------------------------------------------------------------
@@ -133,8 +128,10 @@ function parseXml(buf, cb)
 function fmiRead(simulated, cb)
 {
     if (simulated === true) {
-        fs.readFile("wfs.xml", "utf8", function(err, data) {
-            cb(err, parseXml(data));
+        fs.readFile("wfs.xml", "utf8", function(err, html) {
+            if (!!err) 
+                return cb(err, null);
+            parseXml(html, cb);
         });        
     }
     else {

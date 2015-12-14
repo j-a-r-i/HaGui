@@ -1,4 +1,7 @@
 "use strict";
+/*
+ * Copyright (C) 2015 Jari Ojanen
+ */
 
 var OAuth = require('oauth'),
     config = require('./config.json');
@@ -12,7 +15,6 @@ const TELLDUS_DOWN = 256
 	
 //const SUPPORTED_METHODS = TELLDUS_TURNON | TELLDUS_TURNOFF | TELLDUS_BELL | TELLDUS_DIM | TELLDUS_UP | TELLDUS_DOWN;
 const SUPPORTED_METHODS = TELLDUS_TURNON | TELLDUS_TURNOFF;
-
 
 //-----------------------------------------------------------------------------
 class TelldusApi 
@@ -31,9 +33,12 @@ class TelldusApi
 									 'HMAC-SHA1');
 	}
 	
-	power(deviceId, state) 
+	setPower(deviceId, state, callback) 
 	{
-		
+		if (state)
+			this._doPut("/device/turnOn", callback);
+		else
+			this._doPut("/device/turnOff", callback);
 	}
 	
 	getSensors(callback) 
@@ -52,6 +57,10 @@ class TelldusApi
 		this._doGet("/devices/list?supportedMethods=" + SUPPORTED_METHODS, callback);
 	}
 	
+	getDeviceInfo(deviceId, callback)
+	{
+		this._doGet("/device/info?id="+deviceId, callback);
+	}
 	
 	_doGet(url, callback)
 	{
@@ -75,7 +84,7 @@ class TelldusApi
 	
 	_doPut(url, callback)
 	{
-		
+		//this.oauth.put(this.site + url);
 	}
 }
 

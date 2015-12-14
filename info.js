@@ -1,7 +1,12 @@
-// https://nodejs.org/api/child_process.html
-//
+/*
+ * Copyright (C) 2015 Jari Ojanen
+ * 
+ * https://nodejs.org/api/child_process.html
+ */
+
 var exec = require('child_process').exec,
-    fs   = require('fs')
+    log  = require('./log.js'),
+    fs   = require('fs');
 
 const MEMINFO = '/proc/meminfo';
 const LOADAVG = '/proc/loadavg';
@@ -23,22 +28,35 @@ function df()
 function meminfo()
 {
     var minfo = {};
-    var data = fs.readFileSync(MEMINFO).toString().trim();
-    data.split("\n").forEach(function (line) {
-        var arr = line.split(':');
-        arr[0] = arr[0].replace('(', '_');
-        arr[0] = arr[0].replace(')', '');
-        if (arr.length === 2) {
-            minfo[arr[0]] = parseInt(arr[1]);
-        }
-    });
+    try {
+        var data = fs.readFileSync(MEMINFO).toString().trim();
+        data.split("\n").forEach(function (line) {
+            var arr = line.split(':');
+            arr[0] = arr[0].replace('(', '_');
+            arr[0] = arr[0].replace(')', '');
+            if (arr.length === 2) {
+                minfo[arr[0]] = parseInt(arr[1]);
+            }
+        });
+    }
+    catch (e) {
+        log.error(e);
+        minfo = { free: 0 }
+    }
     return minfo;
 }
 
 //-----------------------------------------------------------------------------
 function loadavg()
 {
-    var line = fs.readFileSync(LOADAVG).toString();
+    var line = "";
+    try {
+        line = fs.readFileSync(LOADAVG).toString();
+    }
+    catch (e) {
+        log.error(e);
+        line = "-1 -1 -1 -1";
+    }
     return line.trim().split(" ");
 }
 
@@ -53,6 +71,16 @@ function uptime()
     
     return up;
 }
+
+//--------------------------------------------------------------------------------
+// Dummy timer to print ping
+//
+function timer2()
+{
+  var rss = process.memoryUsage().rss / (1024*1024);
+  log.normal("RSS = " + rss);
+}
+
 
 //-----------------------------------------------------------------------------
 module.exports = {

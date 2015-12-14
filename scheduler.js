@@ -1,4 +1,7 @@
 "use strict";
+/*
+ * Copyright (C) 2015 Jari Ojanen
+ */
 
 var fs = require('fs');
 
@@ -37,23 +40,29 @@ class Action {
 	
     setVal(name, val)
 	{
+		console.log(this._name + "." + name + " = " + val);
 		this[name] = val;
 	}
-	/*strings()
+	
+	load(obj)
 	{
-		var ret = [];
-		
-		this._exports.forEach((i) => {
-			ret.push( (i + ":") + this[i] );
+		Object.keys(obj).forEach((key) => {
+			if (key.indexOf("Time") > 0) {
+				var time = clock(obj[key][0], obj[key][1]);
+				this.setVal(key, time);
+			}
+			else {
+				this.setVal(key, obj[key]);
+			}
 		});
-		
-		return ret;
-	}*/
+	}
+
 	strings()
 	{
 		var ret = [];
 		
 		this._exports.forEach((i) => {
+			//ret.push( (i + ":") + this[i] );
 			ret.push( { name: i,
 						value: this[i]});
 		});		
@@ -86,11 +95,11 @@ class Action {
 
 //-----------------------------------------------------------------------------
 class RangeAction extends Action {
-	constructor(aname, emitter, astart, astop, func)
+	constructor(aname, emitter, func)
 	{
 		super(aname, ['startTime', 'stopTime']);
-		this.startTime = astart;
-		this.stopTime = astop;
+		this.startTime = 0;
+		this.stopTime = 0;
 		this._active = false;
 		this._callback = func;
 	}
@@ -144,10 +153,10 @@ class IntervalAction extends Action {
 
 //-----------------------------------------------------------------------------
 class CarHeaterAction extends Action {
-	constructor(aname, emitter, leaveTime, func)
+	constructor(aname, emitter, func)
 	{
 		super(aname, ['leaveTime']);
-		this.leaveTime = leaveTime;
+		this.leaveTime = 0;
 		this._callback = func;
 		this._temp = 0;
 		this._active = false;
@@ -213,12 +222,12 @@ class CarHeaterAction extends Action {
 
 //-----------------------------------------------------------------------------
 class RoomHeaterAction extends Action {
-	constructor(aname, emitter, tempLow, tempHigh, func)
+	constructor(aname, emitter, func)
 	{
-		super(aname, ['tlow', 'thigh']);
+		super(aname, ['lowTemp', 'highTemp']);
 		this._callback = func;
-		this.tlow = tempLow;
-		this.thigh = tempHigh;
+		this.lowTemp = 0;
+		this.highTemp = 0;
 		this._active = false;
 		
 		emitter.on("temp", (temp) => {
@@ -228,12 +237,12 @@ class RoomHeaterAction extends Action {
 	
 	setTemp(value)
 	{
-		if ((this._active == false) && (value < this.tlow)) {
+		if ((this._active == false) && (value < this.lowTemp)) {
 			this._callback(1);
 			this._active = true;
 		}
-		if ((this._active == true) && (value > this.thigh)) {
-			this._callback(1);
+		if ((this._active == true) && (value > this.highTemp)) {
+			this._callback(0);
 			this._active = false;				
 		}		
 	}
@@ -276,7 +285,16 @@ class Scheduler {
 		});
 	}
 
-    setVal(action, sname, value)
+    set(action, values)
+	{
+		this._actions.forEach(function(act) {
+			if (act.name === action) {
+				act.load(values)
+			}
+		});				
+	}
+	
+    setVal(action, sname, value)  // not used anymore
 	{
 		this._actions.forEach(function(act) {
 			if (act.name === action) {
@@ -292,6 +310,15 @@ class Scheduler {
 		self.tick(c);
 	}
 	
+	load()
+	{
+		var settings = require('./settings.json');
+		
+		this._actions.forEach((act) => {
+			act.load(settings[act.name]);
+		});
+	}
+	
 	genHtml()
 	{
 		var fout = fs.createWriteStream('partials/config2.html');
@@ -301,7 +328,7 @@ class Scheduler {
 			fout.write('    <legend><b>'+act.name+'</b></legend>\n');
 			act._exports.forEach((name) => {
 				fout.write('    <label for="'+name+'">'+name+'</label>\n');
-				fout.write('    <input type="time" name="'+name+'" ng-model="'+name+'" step="300.0"><br>\n');
+				fout.write('    <input type="time" name="'+name+'" ng-model="'+act.name+'.'+name+'" step="300.0"><br>\n');
 			})
 			fout.write('    <br>\n');
 			fout.write('    <input type="submit" value="Save">\n');

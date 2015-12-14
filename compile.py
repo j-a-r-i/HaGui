@@ -1,4 +1,7 @@
 import os
+#
+# Copyright (C) 2015 Jari Ojanen
+#
 
 fout = open("report.comp.html", "wt")
 
@@ -15,7 +18,6 @@ for line in open("report.html").readlines():
     if "<!-- GENERATE_VIEWS -->" in line:
         for fname in os.listdir("partials"):
             addFile("partials/"+fname)
-    
     else:
         fout.write(line)
     

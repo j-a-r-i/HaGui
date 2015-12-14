@@ -1,6 +1,14 @@
-/* global . */
+/*
+ * Copyright (C) 2015 Jari Ojanen
+ */
+
 var histories = [];
 var errors = [];
+
+function verbose(msg)
+{
+	// do nothing	
+}
 
 function normal(msg)
 {
@@ -26,7 +34,6 @@ function error(msg)
 	console.log(msg);
 }
 
-
 function getErrors()
 {
 	return errors;
@@ -39,6 +46,7 @@ function getHistory()
 
 //-----------------------------------------------------------------------------
 module.exports = {
+	verbose: verbose,
 	normal: normal,
 	history: history,
 	error: error,

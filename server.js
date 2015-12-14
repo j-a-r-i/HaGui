@@ -1,12 +1,14 @@
 "use strict";
+/*
+ * Copyright (C) 2015 Jari Ojanen
+ */
 
-var version = "0.1.2";
+var version = "0.1.4";
 
 var WebSocket  = require('ws').Server,
     events     = require('events'),
     wss        = new WebSocket({port: 8080}),
     config     = require('./config.json'),
-    settings   = require('./settings.json'),
     sche       = require('./scheduler.js'),
     fmi        = require('./fmi.js'),
     info       = require('./info.js'),
@@ -19,10 +21,11 @@ var tcloud,
     gTimer1,
     gLights = null,
     gCar1 = null,
+    gCar2 = null,
     emitter = new events.EventEmitter();
 
 var simulated = true,
-    simFast = true;
+    simFast = false;
 
 const SENSORS_NAMES = ["ulko.temp",
                        "varasto.temp",
@@ -46,10 +49,7 @@ const CMD_DATA2 ="cmd2";
 const CMD_DATA3 ="cmd3";
 const CMD_WEATHER ="cmd4";
 const CMD_STATUS = "stat";
-const CMD_CONTROL1 = "ctl1";
-const CMD_CONTROL2 = "ctl2";
-const CMD_CONTROL3 = "ctl3";
-const CMD_LOGGING = "log1";
+const CMD_SETVAL = "sval";
 const CMD_SCHEDULERS = "sche1";
 
 const ACTION_CAR1 = "car1";
@@ -69,6 +69,7 @@ if (simulated == false) {
         else {
             gLights = tcloud.getDevice("valot1");
             gCar1   = tcloud.getDevice("auto1");
+            gCar2   = tcloud.getDevice("auto2");
             Promise.all([tcloud.sensor(0), tcloud.sensor(1)]).then((values) => {
                 item.time = new Date();              
                 values.forEach((i) => {
@@ -109,7 +110,7 @@ class MeasureData {
   }
   
   print(table) {
-      log.normal(this._time.toLocaleTimeString() + ": " + this._temp1 + ", " + this._temp2 + ", " + this._humidity);
+      log.verbose(this._time.toLocaleTimeString() + ": " + this._temp1 + ", " + this._temp2 + ", " + this._humidity);
       table.push( {time: this._time,
                    t1: this._temp1,
                    t2: this._temp2,
@@ -200,26 +201,9 @@ function timer1simulated()
     }
 }
 
-//--------------------------------------------------------------------------------
-// Dummy timer to print ping
-//
-function timer2()
-{
-  var rss = process.memoryUsage().rss / (1024*1024);
-  log.normal("RSS = " + rss);
-}
-
 function oneDecimal(x) 
 {
     return Math.round(x * 10) / 10;
-}
-
-function parseTime(name)
-{
-    var hour = parseInt(name.hour)
-    var min  = parseInt(name.min);
-    
-    return sche.toClock(hour,min);
 }
 
 function onWsMessage(message)
@@ -263,26 +247,8 @@ function onWsMessage(message)
         resp.history = log.getHistory();
         break;
         
-    case CMD_CONTROL1:
-        settings.car1.hour = message.arg[0];
-        settings.car1.min = message.arg[1];
-        s.setVal(ACTION_CAR1, "leaveTime", parseTime(settings.car1));
-        break;
-
-    case CMD_CONTROL2:
-        settings.car2.hour = message.arg[0];
-        settings.car2.min = message.arg[1];
-        s.setVal(ACTION_CAR2, "leaveTime", parseTime(settings.car2));
-        break;
-
-    case CMD_CONTROL3:
-        settings.lights_start.hour = message.arg[0];
-        settings.lights_start.min = message.arg[1];
-        settings.lights_stop.hour = message.arg[2];
-        settings.lights_stop.min = message.arg[3];
-
-        s.setVal(ACTION_LIGHT, "startTime", parseTime(settings.lights_start));
-        s.setVal(ACTION_LIGHT, "stopTime",  parseTime(settings.lights_stop));
+    case CMD_SETVAL:
+        s.set(message.action, message.values);
         break;
 
     case CMD_SCHEDULERS:
@@ -331,7 +297,9 @@ else {
   });
 }
 
-s.add(new sche.IntervalAction(ACTION_WEAT, emitter, 60, 
+// Configure scheduler actions
+//
+s.add(new sche.IntervalAction(ACTION_WEAT, emitter, 60,
                               sche.toClock2(gTime), 
                               function() {
     log.normal("reading weather data");
@@ -345,36 +313,35 @@ s.add(new sche.IntervalAction(ACTION_WEAT, emitter, 60,
     });
 }));
 
-s.add(new sche.CarHeaterAction(ACTION_CAR1, emitter, parseTime(settings.car1), function(state) {
+s.add(new sche.CarHeaterAction(ACTION_CAR1, emitter, function(state) {
     log.history("CAR1 " + state);
     if (gCar1) 
         tcloud.power(gCar1, state).then();
 }));
 
-s.add(new sche.CarHeaterAction(ACTION_CAR2, emitter, parseTime(settings.car2), function(state) {
+s.add(new sche.CarHeaterAction(ACTION_CAR2, emitter, function(state) {
     log.history("CAR2 " + state); 
+    if (gCar2) 
+        tcloud.power(gCar2, state).then();
 }));
 
-s.add(new sche.RangeAction(ACTION_LIGHT, emitter, parseTime(settings.lights_start),
-                                 parseTime(settings.lights_stop), 
-                                 function(state) {
+s.add(new sche.RangeAction(ACTION_LIGHT, emitter, function(state) {
     log.history("LIGHT " + state);
     if (gLights) 
         tcloud.power(gLights, state);
 }));
 
-s.add(new sche.RangeAction(ACTION_LIGHT2, emitter, parseTime(settings.lights2_start),
-                                 parseTime(settings.lights2_stop), 
-                                 function(state) {
+s.add(new sche.RangeAction(ACTION_LIGHT2, emitter, function(state) {
     log.history("LIGHT2 " + state);
     if (gLights) 
         tcloud.power(gLights, state);
 }));
 
-s.add(new sche.RoomHeaterAction(ACTION_ROOM, emitter, 5.0, 10.0, function(state) {
+s.add(new sche.RoomHeaterAction(ACTION_ROOM, emitter, function(state) {
     log.history("ROOM " + state);
 }));
 
+s.load();
 
 if (simulated == false) {
     s.start();
@@ -384,6 +351,7 @@ else {
     emitter.emit("temp", -12.0);
 }
 wss.on('connection', function(ws) {
+    
     ws.on('message', function(message) {
         try {
             //console.log('received: %s', message);
@@ -394,4 +362,12 @@ wss.on('connection', function(ws) {
             log.error(e);
         }
     });
+    
+    ws.on('close', () => {
+       console.log("WebSocket closed."); 
+    });
+});
+
+process.on('exit', () => {
+    console.log("Shutting down server.js");
 });

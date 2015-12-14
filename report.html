@@ -19,11 +19,7 @@ const CMD_DATA2 ="cmd2";
 const CMD_DATA3 ="cmd3";
 const CMD_WEATHER = "cmd4";
 const CMD_STATUS = "stat";
-const CMD_CONTROL = "ctrl";
-const CMD_CONTROL1 = "ctl1";
-const CMD_CONTROL2 = "ctl2";
-const CMD_CONTROL3 = "ctl3";
-const CMD_LOGGING = "log1";
+const CMD_SETVAL = "sval";
 const CMD_SCHEDULERS = "sche1";
 
 
@@ -238,15 +234,17 @@ app.controller('HaCtrlController', ['$scope', function ($scope) {
     $scope.submit1 = function() {
         var date = new Date($scope.car1Leave);
 
-        send(CMD_CONTROL1, {hour: date.getHours(), 
-                            min: date.getMinutes()});
+        send(CMD_SETVAL, { action: 'car1', 
+                           values: { leaveTime: [date.getHours(), date.getMinutes()] }
+                         });
         console.log("CAR1 :" + $scope.car1Leave);
     };
     $scope.submit2 = function() {
         var date = new Date($scope.car2Leave);
 
-        send(CMD_CONTROL2, {hour: date.getHours(), 
-                            min: date.getMinutes()});
+        send(CMD_SETVAL, { action: 'car2', 
+                           values: { leaveTime: [date.getHours(), date.getMinutes()] }
+                         });
         console.log("CAR2 :" + $scope.car2Leave);
     };
     $scope.submit3 = function() {

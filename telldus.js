@@ -1,4 +1,7 @@
 "use strict";
+/*
+ * Copyright (C) 2015 Jari Ojanen
+ */
 
 var TAPI   = require('telldus-live'),
     config = require('./config.json'),

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<head>
+<meta charset="utf-8" />
+<meta name="author" content="Jari Ojanen">
+<title>Test Application</title>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular-route.min.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/q.js/0.9.2/q.js"></script>
+<script language="javascript" type="text/javascript">
+//var wsUri = "ws://192.168.100.40:8080/";
+var wsUri = "ws://localhost:8080/";
+//var stat = null;
+var websocket = null;
+var callbacks = {};
+
+const CMD_DATA1 ="cmd1";
+const CMD_DATA2 ="cmd2";
+const CMD_DATA3 ="cmd3";
+const CMD_WEATHER = "cmd4";
+const CMD_STATUS = "stat";
+const CMD_SETVAL = "sval";
+const CMD_SCHEDULERS = "sche1";
+
+function init()
+{
+    websocket = new WebSocket(wsUri);
+    websocket.onopen = onOpen;
+    websocket.onclose = onClose;
+    websocket.onmessage = onMessage;
+    websocket.onerror = onError;
+}
+
+function onOpen(evt)
+{
+}
+
+function onClose(evt)
+{
+}
+
+function onMessage(evt)
+{
+    var msg = JSON.parse(evt.data);
+    
+    if (callbacks.hasOwnProperty(msg.cmd)) {
+        callbacks[msg.cmd].defer.resolve(msg);
+        delete callbacks[msg.cmd];
+    }
+}
+
+function onError(evt)
+{
+    alert('ERROR: ' + JSON.stringify(evt));
+}
+
+function send(command, request)
+{
+    var deferred = Q.defer();
+    
+    callbacks[command] = {
+        defer: deferred
+    };
+    
+    request.cmd = command;
+
+    websocket.send(JSON.stringify(request));
+    return deferred.promise;
+}
+
+window.addEventListener("load", init, false);
+
+var app = angular.module('testApp', ['ngRoute']);
+
+app.controller('TstController', ['$scope', function ($scope) {
+    $scope.commands = [CMD_DATA1,
+                       CMD_DATA2,
+                       CMD_DATA3,
+		    		   CMD_WEATHER,
+		  			   CMD_STATUS,
+					   CMD_SETVAL,
+					   CMD_SCHEDULERS];
+    $scope.input = "{}";
+    $scope.output = "";
+    
+    $scope.submit = function() {
+        send($scope.curCommand, JSON.parse($scope.input))
+        .then(function(msg) {
+            $scope.output = JSON.stringify(msg, null, "\t");
+            //alert(msg);
+            $scope.$apply();
+        });
+    };
+}]);
+
+//------------------------------------------------------------------------------
+</script>
+</head>
+<body ng-app='testApp'>
+  <div class="container">
+    <form name="formTest" ng-submit="submit()" ng-controller="TstController">
+      <fieldset>
+        <B>Command</B>&nbsp;&nbsp;&nbsp;
+		<select name="Command" ng-model="curCommand">
+    	    <option ng-repeat="val in commands" value="{{val}}">{{val}}</option>
+		</select>
+        <br/>		
+        <textarea name="input" width="200" height="20" ng-model="input">
+        </textarea>
+        <br/>
+        <input type="submit" value="Send">
+        <br/>		
+        <b>Output:</b><br/>
+        <pre>{{output}}</pre>	
+      </fieldset>
+    </form>
+  </div>
+</body>
