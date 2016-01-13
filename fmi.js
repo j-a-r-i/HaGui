@@ -5,7 +5,7 @@
 // http://ilmatieteenlaitos.fi/tallennetut-kyselyt
 
 var fs = require("fs");
-var http = require('http');
+var myhttp = require('./myhttp');
 var config = require('./config');
 var parser = require("xml2js").parseString;
 
@@ -16,23 +16,6 @@ url += "&parameters=temperature,dewpoint,windspeedms";
 const FIELD_TEMP = 0;
 const FIELD_DP = 1;
 const FIELD_WIND = 2;
-
-//-----------------------------------------------------------------------------
-function read(url, callback)
-{
-    return http.get(url, function(res) {
-        var body = '';
-        res.on('data', function(d) {
-            body += d;
-        });
-	res.on('error', function(e) {
-	    callback(e, null);
-	});
-        res.on('end', function() {
-	    callback(null, body);
-        });
-    });
-}
 
 //-----------------------------------------------------------------------------
 // not used anymore
@@ -135,7 +118,7 @@ function fmiRead(simulated, cb)
         });        
     }
     else {
-        read(url, function(err, html) {
+        myhttp.get(url, function(err, html) {
             if (!!err) {
                 console.log(err);
                 return cb(err, null);
