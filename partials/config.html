@@ -1,42 +1,62 @@
-<br>
-<form ng-submit="submit1()" ng-controller="HaCtrlController">
+<form ng-submit="submit1('weather')" ng-controller="HaCtrlController">
   <fieldset>
-    <legend><b>Car 1</b></legend>
-    <label for="time">Leaving</label>
-    <input type="time" name="time" ng-model="car1Leave" step="300.0"><br><br>
-    <input type="checkbox" name="mon" value="" checked>Mon
-    <input type="checkbox" name="tue" value="" checked>Tue
-    <input type="checkbox" name="wed" value="" checked>Wed
-    <input type="checkbox" name="thu" value="" checked>Thu
-    <input type="checkbox" name="fri" value="" checked>Fri
-    <input type="checkbox" name="sat" value="">Sun
-    <input type="checkbox" name="sun" value="">Sat<br><br>
+    <legend><b>weather</b></legend>
+    <label for="interval">interval</label>
+    <input type="time" name="interval" ng-model="interval" step="300.0"><br>
+    <label for="_startedTime">_startedTime</label>
+    <input type="time" name="_startedTime" ng-model="_startedTime" step="300.0"><br>
+    <br>
     <input type="submit" value="Save">
   </fieldset>
 </form>
-<form ng-submit="submit2()" ng-controller="HaCtrlController">
+<form ng-submit="submit1('car1')" ng-controller="HaCtrlController">
   <fieldset>
-    <legend><b>Car 2</b></legend>
-    <label for="time">Leaving</label>
-    <input type="time" name="time" ng-model="car2Leave" step="300.0"><br><br>
-    <input type="checkbox" name="mon" value="" checked>Mon
-    <input type="checkbox" name="tue" value="" checked>Tue
-    <input type="checkbox" name="wed" value="" checked>Wed
-    <input type="checkbox" name="thu" value="" checked>Thu
-    <input type="checkbox" name="fri" value="" checked>Fri
-    <input type="checkbox" name="sat" value="">Sun
-    <input type="checkbox" name="sun" value="">Sat<br><br>
+    <legend><b>car1</b></legend>
+    <label for="leaveTime">leaveTime</label>
+    <input type="time" name="leaveTime" ng-model="leaveTime" step="300.0"><br>
+    <br>
     <input type="submit" value="Save">
   </fieldset>
 </form>
-<form ng-submit="submit3()" ng-controller="HaCtrlController">
+<form ng-submit="submit1('car2')" ng-controller="HaCtrlController">
   <fieldset>
-    <legend><b>Lights</b></legend>
-    <label for="startTime">Start</label>
-    <input type="time" name="startTime" ng-model="lightStart" step="300.0"><br>
-
-    <label for="stopTime">Stop</label>
-    <input type="time" name="stopTime" ng-model="lightStop" step="300.0"><br><br>
+    <legend><b>car2</b></legend>
+    <label for="leaveTime">leaveTime</label>
+    <input type="time" name="leaveTime" ng-model="leaveTime" step="300.0"><br>
+    <br>
+    <input type="submit" value="Save">
+  </fieldset>
+</form>
+<form ng-submit="submit1('light')" ng-controller="HaCtrlController">
+  <fieldset>
+    <legend><b>light</b></legend>
+    <label for="startTime">startTime</label>
+    <input type="time" name="startTime" ng-model="startTime" step="300.0"><br>
+    <label for="stopTime">stopTime</label>
+    <input type="time" name="stopTime" ng-model="stopTime" step="300.0"><br>
+    <br>
+    <input type="submit" value="Save">
+  </fieldset>
+</form>
+<form ng-submit="submit1('light2')" ng-controller="HaCtrlController">
+  <fieldset>
+    <legend><b>light2</b></legend>
+    <label for="startTime">startTime</label>
+    <input type="time" name="startTime" ng-model="startTime" step="300.0"><br>
+    <label for="stopTime">stopTime</label>
+    <input type="time" name="stopTime" ng-model="stopTime" step="300.0"><br>
+    <br>
+    <input type="submit" value="Save">
+  </fieldset>
+</form>
+<form ng-submit="submit1('room')" ng-controller="HaCtrlController">
+  <fieldset>
+    <legend><b>room</b></legend>
+    <label for="tlow">tlow</label>
+    <input type="time" name="tlow" ng-model="tlow" step="300.0"><br>
+    <label for="thigh">thigh</label>
+    <input type="time" name="thigh" ng-model="thigh" step="300.0"><br>
+    <br>
     <input type="submit" value="Save">
   </fieldset>
 </form>
