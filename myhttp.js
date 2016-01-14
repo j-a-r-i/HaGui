@@ -3,7 +3,8 @@
  * Copyright (C) 2016 Jari Ojanen
  */
 
-var http = require('http');
+var http = require('http'),
+    https = require('https');
 
 //-----------------------------------------------------------------------------
 function get(url, callback)
@@ -22,7 +23,7 @@ function get(url, callback)
     });
 }
 
- //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 function getp(url)
 {
     return new Promise((resolve,reject) => {
@@ -42,7 +43,29 @@ function getp(url)
 }
 
 //-----------------------------------------------------------------------------
+// https request
+//
+function requests(options)
+{
+    return new Promise((resolve,reject) => {
+        var r = https.request(options, (res) => {
+            if (res.statusCode != 200) {
+                console.log('status: ' + res.statusCode);
+                reject(res.statusCode);
+            }
+            //console.log('header: ' + JSON.stringify(res.headers));
+
+            res.on('data', (d) => {
+                resolve(JSON.parse(d.toString()));
+            });            
+        });
+        r.end();
+    });
+}
+
+//-----------------------------------------------------------------------------
 module.exports = {
 	get: get,
 	getp: getp,
+    requests: requests,
 };
