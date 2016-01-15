@@ -4,10 +4,10 @@
  */
 // http://ilmatieteenlaitos.fi/tallennetut-kyselyt
 
-var fs = require("fs");
-var myhttp = require('./myhttp');
-var config = require('./config');
-var parser = require("xml2js").parseString;
+var fs = require("fs"),
+    myhttp = require('./myhttp'),
+    config = require('./config'),
+    parser = require("xml2js").parseString;
 
 var url = "http://data.fmi.fi/fmi-apikey/" + config.fmi_key + "/wfs?request=getFeature&storedquery_id=fmi::forecast::hirlam::surface::point::multipointcoverage&place=oittaa";
 

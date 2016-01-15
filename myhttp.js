@@ -54,10 +54,13 @@ function requests(options)
                 reject(res.statusCode);
             }
             //console.log('header: ' + JSON.stringify(res.headers));
-
+            var data = "";
             res.on('data', (d) => {
-                resolve(JSON.parse(d.toString()));
-            });            
+                data += d;
+            });
+            res.on('end', () => {
+                resolve(JSON.parse(data.toString()));
+            });          
         });
         r.end();
     });
