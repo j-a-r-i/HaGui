@@ -14,36 +14,20 @@ var WebSocket  = require('ws').Server,
     info       = require('./info.js'),
     log        = require('./log.js'),
     dweet      = require('./dweet.js'),
-    telldus    = require('./telldus.js');
+    engine     = require('./engineSim.js');
 
-var tcloud,
+var 
     gMeasures = [],
     gWeather = [],
-    gTimer1,
     gLights = null,
     gCar1 = null,
     gCar2 = null,
-    emitter = new events.EventEmitter();
+    emitter = new events.EventEmitter(),
+    emitterMeas = new events.EventEmitter;
 
-var simulated = false,
-    simFast = false;
+var simulated = true;
 
-const SENSORS_NAMES = ["ulko.temp",
-                       "varasto.temp",
-                       "varasto.humidity"];
 
-var simData = [ { name: SENSORS_NAMES[0],
-                  value: 2.0,
-                  min: -5.0,
-                  max: 5.0},
-                { name: SENSORS_NAMES[1],
-                  value: 10.0,
-                  min: 5.0,
-                  max: 15.0},
-                { name: SENSORS_NAMES[2],
-                  value: 40.0,
-                  min: 30.0,
-                  max: 60.0}];
 
 const CMD_DATA1 ="cmd1";
 const CMD_DATA2 ="cmd2";
@@ -60,157 +44,12 @@ const ACTION_LIGHT2 = "light2";
 const ACTION_ROOM = "room";
 const ACTION_WEAT = "weather";
 
-if (simulated === false) {
-    tcloud = new telldus.Telldus();
-    
-    tcloud.init((err) => {
-        if (!!err) {
-            log.error(err);
-        }
-        else {
-            gLights = tcloud.getDevice("valot1");
-            gCar1   = tcloud.getDevice("auto1");
-            gCar2   = tcloud.getDevice("auto2");
-            Promise.all([tcloud.sensor(0), tcloud.sensor(1)]).then((values) => {
-                item.time = new Date();              
-                values.forEach((i) => {
-                    i.forEach((i2) => {
-                        item.setItem(i2[0], i2[1]);             
-                    });
-                });
-                item.print(gMeasures);               
-            }, (reason) => {
-                log.error(reason);
-            });
-        }
-    });
-}
+engine.init(emitterMeas);
 
 //--------------------------------------------------------------------------------
-class MeasureData {
-  constructor() {
-    this._time = "";
-    this._temp1 = -99.0;
-    this._temp2 = -99.0;
-    this._humidity = -99.0;
-  }
-  
-  setItem(name, value) {
-    if (name == SENSORS_NAMES[0]) {
-        this._temp1 = oneDecimal(parseFloat(value));
-    }
-    else if (name == SENSORS_NAMES[1]) {
-        this._temp2 = oneDecimal(parseFloat(value));
-        
-        if (simulated === false)
-            emitter.emit("temp", this._temp2);
-    }
-    else if (name == SENSORS_NAMES[2]) {
-        this._humidity = oneDecimal(parseFloat(value));
-    }
-  }
-  
-  print(table) {
-      log.verbose(this._time.toLocaleTimeString() + ": " + this._temp1 + ", " + this._temp2 + ", " + this._humidity);
-      table.push( {time: this._time,
-                   t1: this._temp1,
-                   t2: this._temp2,
-                   h1: this._humidity
-                   });
-  }
-  
-  get time() {
-    return this._time;
-  }
-    
-  set time(value) {
-    this._time = value;
-  }
-  set temp2(value) {
-    this._temp2 = value;
-  }
-  set humidity2(value) {
-    this._humidity = value;
-  }
-}
 
-//--------------------------------------------------------------------------------
-var item = new MeasureData();
 var myDweet = new dweet.Dweet();
 
-//--------------------------------------------------------------------------------
-function random (low, high)
-{
-    return Math.random() * (high - low) + low;
-}
-
-//--------------------------------------------------------------------------------
-// A periodic timer for reading data from Telldus server.
-//
-function timer1()
-{
-    console.log("timer1");
-    
-    Promise.all([tcloud.sensor(0), tcloud.sensor(1)]).then((values) => {
-        item.time = new Date();              
-        values.forEach((i) => {
-            i.forEach((i2) => {
-                item.setItem(i2[0], i2[1]);             
-            });
-        });
-        item.print(gMeasures);               
-        myDweet.send(item);
-
-        if (gMeasures.length > 300)
-            gMeasures.shift();
-    }, (reason) => {
-        log.error(reason);
-    });      
-}
-
-function simOffset(value, min, max)
-{
-    var offset = random(-0.5, 0.5);
-
-    if (value < min)
-	   offset = Math.abs(offset);
-    if (value > max)
-	   offset = -Math.abs(offset);
-    return offset;
-}
-
-
-function timer1simulated()
-{
-    console.log("timer1simulated");
-    
-    gTime.setMinutes(gTime.getMinutes() + 10);
-    
-    item.time = new Date(gTime);
-    simData.forEach(function(data) {
-       data.value += simOffset(data.value, data.min, data.max);
-       item.setItem(data.name, data.value); 
-    });
-    item.print(gMeasures);
-    
-    var c = sche.toClock2(gTime);
-    s.tick(c);
-
-    if (gMeasures.length > 300) {
-        gMeasures.shift();
-        if (simFast) {
-            log.normal("slow mode updating simulated data");
-            simFast = false;
-            clearInterval(gTimer1);
-            gTimer1 = setInterval(timer1simulated, 2000);
-        }
-    }
-}
-
-function oneDecimal(x) 
-{
-    return Math.round(x * 10) / 10;
-}
 
 function onWsMessage(message)
 {
@@ -287,21 +126,10 @@ var s = new sche.Scheduler();
 log.history("HaGUI V" + version);
 log.history("time: " + sche.toClock2(gTime));
 
+
+engine.start();
+
 //--------------------------------------------------------------------------------
-if (simulated === false) {
-  gTimer1 = setInterval(timer1, 600000);  // 10 min
-}
-else {
-  gTimer1 = setInterval(timer1simulated, 100);  // 1 sec
-  fmi.fmiRead(simulated, function(err,arr) {
-      if (err) {
-          log.error(err);
-      }
-      else {
-        gWeather = arr;
-      }
-  });
-}
 
 // Configure scheduler actions
 //
