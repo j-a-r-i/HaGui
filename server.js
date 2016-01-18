@@ -13,6 +13,7 @@ var WebSocket  = require('ws').Server,
     fmi        = require('./fmi.js'),
     info       = require('./info.js'),
     log        = require('./log.js'),
+    dweet      = require('./dweet.js'),
     telldus    = require('./telldus.js');
 
 var tcloud,
@@ -24,7 +25,7 @@ var tcloud,
     gCar2 = null,
     emitter = new events.EventEmitter();
 
-var simulated = true,
+var simulated = false,
     simFast = false;
 
 const SENSORS_NAMES = ["ulko.temp",
@@ -135,7 +136,7 @@ class MeasureData {
 
 //--------------------------------------------------------------------------------
 var item = new MeasureData();
-
+var myDweet = new dweet.Dweet();
 
 //--------------------------------------------------------------------------------
 function random (low, high)
@@ -148,6 +149,8 @@ function random (low, high)
 //
 function timer1()
 {
+    console.log("timer1");
+    
     Promise.all([tcloud.sensor(0), tcloud.sensor(1)]).then((values) => {
         item.time = new Date();              
         values.forEach((i) => {
@@ -156,6 +159,7 @@ function timer1()
             });
         });
         item.print(gMeasures);               
+        myDweet.send(item);
 
         if (gMeasures.length > 300)
             gMeasures.shift();
@@ -178,6 +182,8 @@ function simOffset(value, min, max)
 
 function timer1simulated()
 {
+    console.log("timer1simulated");
+    
     gTime.setMinutes(gTime.getMinutes() + 10);
     
     item.time = new Date(gTime);
@@ -186,7 +192,7 @@ function timer1simulated()
        item.setItem(data.name, data.value); 
     });
     item.print(gMeasures);
-
+    
     var c = sche.toClock2(gTime);
     s.tick(c);
 
