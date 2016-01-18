@@ -18,7 +18,7 @@ function normal(msg)
 function history(msg)
 {
 	var d = new Date();
-	histories.push(d.toLocaleString() + " " + msg);
+	histories.push(d.toISOString().slice(5,19) + " " + msg);
 	if (histories.length > 100)
 		histories.shift();
 		
