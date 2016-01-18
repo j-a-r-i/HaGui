@@ -9,11 +9,11 @@ var fInsideList = false,
 saxStream.on("error", function (e) {
   // unhandled errors will throw, since this is a proper node
   // event emitter.
-  console.error("error!", e)
+  console.error("error!", e);
   // clear the error
-  this._parser.error = null
-  this._parser.resume()
-})
+  this._parser.error = null;
+  this._parser.resume();
+});
 saxStream.on("opentag", function (node) {
   switch (node.name) {
     case "gml:doubleOrNilReasonTupleList":
@@ -23,7 +23,7 @@ saxStream.on("opentag", function (node) {
        fInsidePos = true;
        break;
   }
-})
+});
 saxStream.on("closetag", function (name) {
   switch (name) {
     case "gml:doubleOrNilReasonTupleList":
@@ -33,7 +33,7 @@ saxStream.on("closetag", function (name) {
        fInsidePos = false;
        break;
   }
-})
+});
 saxStream.on("text", function (data) {
   //console.log(data);
   if (fInsideList) {
@@ -41,8 +41,8 @@ saxStream.on("text", function (data) {
     console.log(arr);
   }
   if (fInsidePos) {
-    var arr = data.trim().split("\n");
-    console.log(arr);
+    var arr2 = data.trim().split("\n");
+    console.log(arr2);
   }
 });
 

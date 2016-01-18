@@ -58,9 +58,9 @@ const ACTION_CAR2 = "car2";
 const ACTION_LIGHT = "light";
 const ACTION_LIGHT2 = "light2";
 const ACTION_ROOM = "room";
-const ACTION_WEAT = "weather"
+const ACTION_WEAT = "weather";
 
-if (simulated == false) {
+if (simulated === false) {
     tcloud = new telldus.Telldus();
     
     tcloud.init((err) => {
@@ -81,7 +81,7 @@ if (simulated == false) {
                 item.print(gMeasures);               
             }, (reason) => {
                 log.error(reason);
-            })      
+            });
         }
     });
 }
@@ -102,7 +102,7 @@ class MeasureData {
     else if (name == SENSORS_NAMES[1]) {
         this._temp2 = oneDecimal(parseFloat(value));
         
-        if (simulated == false)
+        if (simulated === false)
             emitter.emit("temp", this._temp2);
     }
     else if (name == SENSORS_NAMES[2]) {
@@ -202,7 +202,7 @@ function timer1simulated()
             log.normal("slow mode updating simulated data");
             simFast = false;
             clearInterval(gTimer1);
-            gTimer1 = setInterval(timer1simulated, 2000)
+            gTimer1 = setInterval(timer1simulated, 2000);
         }
     }
 }
@@ -214,7 +214,7 @@ function oneDecimal(x)
 
 function onWsMessage(message)
 {
-    var resp = { cmd: message.cmd }  
+    var resp = { cmd: message.cmd };
     var arr = [];
 
     log.normal("Executing " + message.cmd);
@@ -288,7 +288,7 @@ log.history("HaGUI V" + version);
 log.history("time: " + sche.toClock2(gTime));
 
 //--------------------------------------------------------------------------------
-if (simulated == false) {
+if (simulated === false) {
   gTimer1 = setInterval(timer1, 600000);  // 10 min
 }
 else {
@@ -349,7 +349,7 @@ s.add(new sche.RoomHeaterAction(ACTION_ROOM, emitter, function(state) {
 
 s.load();
 
-if (simulated == false) {
+if (simulated === false) {
     s.start();
 }
 else {

@@ -34,7 +34,7 @@ eventEmitter.emit("temp", 12.2);
 
 console.log(c1);
 
-c1['a'] = 321;
+c1.a = 321;
 
 console.log(c1);
 

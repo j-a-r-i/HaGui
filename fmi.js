@@ -27,7 +27,7 @@ function findKey(data, key)
             if (Array.isArray(data[k])) {
                 data[k].forEach(function(i) {
                     findKey(i, key);
-                })
+                });
             }
             else {
                 findKey(data[k], key);
@@ -55,11 +55,11 @@ function parseXml(buf, cb)
                     'gmlcov:MultiPointCoverage'];
                     
         for (let i=0; i<path.length; i++) {
-            if (i===0)
+            if (i === 0)
                 n = n[path[i]];
             else
                 n = n[path[i]][0];
-            if (n == null) 
+            if (n === null) 
                 return cb("Invalid XML", null);
         }
         
@@ -99,7 +99,7 @@ function parseXml(buf, cb)
         
         var i;
         for (i=0; i<arr.length; i++) {
-            if (arr[i] != null)
+            if (arr[i] !== null)
                 arr[i].date = arr2[i];
         }
         //console.log(arr.length + " , " +  arr2.length);

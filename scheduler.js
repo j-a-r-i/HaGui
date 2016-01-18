@@ -232,16 +232,16 @@ class RoomHeaterAction extends Action {
 		
 		emitter.on("temp", (temp) => {
 			this.setTemp(temp);
-		})
+		});
 	}
 	
 	setTemp(value)
 	{
-		if ((this._active == false) && (value < this.lowTemp)) {
+		if ((this._active === false) && (value < this.lowTemp)) {
 			this._callback(1);
 			this._active = true;
 		}
-		if ((this._active == true) && (value > this.highTemp)) {
+		if ((this._active === true) && (value > this.highTemp)) {
 			this._callback(0);
 			this._active = false;				
 		}		
@@ -289,7 +289,7 @@ class Scheduler {
 	{
 		this._actions.forEach(function(act) {
 			if (act.name === action) {
-				act.load(values)
+				act.load(values);
 			}
 		});				
 	}
@@ -298,7 +298,7 @@ class Scheduler {
 	{
 		this._actions.forEach(function(act) {
 			if (act.name === action) {
-				act.setVal(sname, value)
+				act.setVal(sname, value);
 			}
 		});				
 	}
@@ -329,7 +329,7 @@ class Scheduler {
 			act._exports.forEach((name) => {
 				fout.write('    <label for="'+name+'">'+name+'</label>\n');
 				fout.write('    <input type="time" name="'+name+'" ng-model="'+act.name+'.'+name+'" step="300.0"><br>\n');
-			})
+			});
 			fout.write('    <br>\n');
 			fout.write('    <input type="submit" value="Save">\n');
 			fout.write('  </fieldset>\n');

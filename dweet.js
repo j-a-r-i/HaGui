@@ -27,7 +27,7 @@ class Dweet {
         this.post("/dweet/for/"+NAME+"?"+querystring.stringify(data), "POST")
         .then((val) => {
             console.log(val);
-        })
+        });
     }
     
     read() {
@@ -35,7 +35,7 @@ class Dweet {
         .then((val) => {
             val.with.forEach( (i) => {
                 console.log(i.created, i.content);
-            })
+            });
         });
     }
 }

@@ -11,7 +11,7 @@ var readers = [ //new nasdaq.Nasdaq(),
 
 readers[0].download().then((res) => {
     console.log(res);
-})
+});
                 
 /*
 readers.forEach((obj) => {

@@ -10,7 +10,7 @@ const sites = ['http://yle.fi/uutiset/rss/uutiset.rss?osasto=talous',
                'http://feeds.kauppalehti.fi/rss/topic/sijoittaminen',
                'http://www.hs.fi/rss/?osastot=talous',
                'http://www.mtv.fi/api/feed/rss/uutiset_talous',
-               ]
+               ];
 
 const tags = ['aktia', 'fortum', 'nokia'];
 
@@ -56,7 +56,7 @@ class RSS {
             .catch((reason) => {
                 reject(reason);
             });
-        })
+        });
     }
 }
 

@@ -41,7 +41,7 @@ function meminfo()
     }
     catch (e) {
         log.error(e);
-        minfo = { free: 0 }
+        minfo = { free: 0 };
     }
     return minfo;
 }

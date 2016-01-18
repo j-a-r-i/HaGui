@@ -83,7 +83,7 @@ class Telldus
                 if (!!err) {
                     return reject(err);
                 }
-                var arr = []
+                var arr = [];
                 sensor.data.forEach((data) => {
                     var name = sensor.name + "." + data.name;
                     arr.push([name, data.value]);
