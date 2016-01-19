@@ -111,13 +111,13 @@ class RangeAction extends Action {
 		}
 		else if (clock < this.stopTime) {
 			if (!this._active) {
-				this._callback(1);
+				this._callback(this, 1);
 				this._active = true;
 			}	
 		}
 		else {
 			if (this._active) {
-				this._callback(0);
+				this._callback(this, 0);
 				this._active = false;
 			}
 		}
@@ -140,7 +140,7 @@ class IntervalAction extends Action {
 			return;
 	
 		if (clock >= this._startedTime) {
-			this._callback();
+			this._callback(this);
 			//console.log("set started time:" + (clock + this.interval))
 			this._startedTime = clock + this.interval;
 			if (this._startedTime > 24*60) {
@@ -198,7 +198,7 @@ class CarHeaterAction extends Action {
 	{
 		if (this._active === true) {
 			if (clock > this.leaveTime) {
-				this._callback(0);
+				this._callback(this, 0);
 				this._active = false;
 			}
 		}
@@ -213,7 +213,7 @@ class CarHeaterAction extends Action {
 			var sClock = this.leaveTime - start;
 			
 			if (clock >= sClock) {
-				this._callback(1);
+				this._callback(this, 1);
 				this._active = true;			
 			}			
 		}
@@ -238,11 +238,11 @@ class RoomHeaterAction extends Action {
 	setTemp(value)
 	{
 		if ((this._active === false) && (value < this.lowTemp)) {
-			this._callback(1);
+			this._callback(this, 1);
 			this._active = true;
 		}
 		if ((this._active === true) && (value > this.highTemp)) {
-			this._callback(0);
+			this._callback(this, 0);
 			this._active = false;				
 		}		
 	}

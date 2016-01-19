@@ -2,8 +2,7 @@
 /*
  * Copyright (C) 2015 Jari Ojanen
  */
-
-var version = "0.1.4";
+var version = "0.2.0";
 
 var WebSocket  = require('ws').Server,
     events     = require('events'),
@@ -14,7 +13,8 @@ var WebSocket  = require('ws').Server,
     info       = require('./info.js'),
     log        = require('./log.js'),
     dweet      = require('./dweet.js'),
-    engine     = require('./engineSim.js');
+    measure    = require('./measure.js'),
+    engine     = require('./engineReal.js');
 
 var 
     gMeasures = [],
@@ -23,11 +23,7 @@ var
     gCar1 = null,
     gCar2 = null,
     emitter = new events.EventEmitter(),
-    emitterMeas = new events.EventEmitter;
-
-var simulated = true;
-
-
+    emitterMeas = new events.EventEmitter();
 
 const CMD_DATA1 ="cmd1";
 const CMD_DATA2 ="cmd2";
@@ -37,20 +33,7 @@ const CMD_STATUS = "stat";
 const CMD_SETVAL = "sval";
 const CMD_SCHEDULERS = "sche1";
 
-const ACTION_CAR1 = "car1";
-const ACTION_CAR2 = "car2";
-const ACTION_LIGHT = "light";
-const ACTION_LIGHT2 = "light2";
-const ACTION_ROOM = "room";
-const ACTION_WEAT = "weather";
-
-engine.init(emitterMeas);
-
 //--------------------------------------------------------------------------------
-
-var myDweet = new dweet.Dweet();
-
-
 function onWsMessage(message)
 {
     var resp = { cmd: message.cmd };
@@ -120,24 +103,40 @@ function onWsMessage(message)
     return resp;
 }
 
+//--------------------------------------------------------------------------------
+var myDweet = new dweet.Dweet();
 var gTime = new Date();
 var s = new sche.Scheduler();
 
-log.history("HaGUI V" + version);
-log.history("time: " + sche.toClock2(gTime));
+log.history(gTime, "HaGUI V" + version);
+log.history(gTime, "time: " + sche.toClock2(gTime));
 
+emitterMeas.on("measure", (data) => {
+    gMeasures.push(data.values());
+    myDweet.send(data);
+            
+    //if (simulated === false)
+    emitter.emit("temp", data.temp2);
 
+    if (gMeasures.length > 300)
+        gMeasures.shift();
+});
+emitterMeas.on("tick", (time) => {  // for simulated engine
+    var c = sche.toClock2(time);
+    s.tick(c);
+});
+
+engine.init(emitterMeas);
 engine.start();
 
 //--------------------------------------------------------------------------------
-
 // Configure scheduler actions
 //
-s.add(new sche.IntervalAction(ACTION_WEAT, emitter, 60,
+s.add(new sche.IntervalAction(measure.ACTION_WEAT, emitter, 60,
                               sche.toClock2(gTime), 
                               function() {
-    log.normal("reading weather data");
-    fmi.fmiRead(simulated, function(err,arr) {
+    log.verbose("reading weather data");
+    fmi.fmiRead(engine.isSimulated, function(err,arr) {
         if (err) {
             log.error(err);
         }
@@ -147,46 +146,43 @@ s.add(new sche.IntervalAction(ACTION_WEAT, emitter, 60,
     });
 }));
 
-s.add(new sche.CarHeaterAction(ACTION_CAR1, emitter, function(state) {
-    log.history("CAR1 " + state);
-    if (gCar1) 
-        tcloud.power(gCar1, state).then();
+s.add(new sche.CarHeaterAction(measure.ACTION_CAR1, emitter, function(action, state) {
+    log.history(engine.time(), action.name + " " + state);
+    engine.action(action.name, state);
 }));
 
-s.add(new sche.CarHeaterAction(ACTION_CAR2, emitter, function(state) {
-    log.history("CAR2 " + state); 
-    if (gCar2) 
-        tcloud.power(gCar2, state).then();
+s.add(new sche.CarHeaterAction(measure.ACTION_CAR2, emitter, function(action, state) {
+    log.history(engine.time(), action.name + " " + state);
+    engine.action(action.name, state);
 }));
 
-s.add(new sche.RangeAction(ACTION_LIGHT, emitter, function(state) {
-    log.history("LIGHT " + state);
-    if (gLights) 
-        tcloud.power(gLights, state);
+s.add(new sche.RangeAction(measure.ACTION_LIGHT, emitter, function(action, state) {
+    log.history(engine.time(), action.name + " " + state);
+    engine.action(action.name, state);
 }));
 
-s.add(new sche.RangeAction(ACTION_LIGHT2, emitter, function(state) {
-    log.history("LIGHT2 " + state);
-    if (gLights) 
-        tcloud.power(gLights, state);
+s.add(new sche.RangeAction(measure.ACTION_LIGHT2, emitter, function(action, state) {
+    log.history(engine.time(), action.name + " " + state);
+    engine.action(action.name, state);
 }));
 
-s.add(new sche.RoomHeaterAction(ACTION_ROOM, emitter, function(state) {
-    log.history("ROOM " + state);
+s.add(new sche.RoomHeaterAction(measure.ACTION_ROOM, emitter, function(action, state) {
+    log.history(engine.time(), action.name + " " + state);
+    engine.action(action.name, state);
 }));
 
 s.load();
 
-if (simulated === false) {
+if (engine.isSimulated === false) {
     s.start();
 }
 else {
     s.genHtml();
     emitter.emit("temp", -12.0);
 }
-wss.on('connection', function(ws) {
+wss.on('connection', (ws) => {
     
-    ws.on('message', function(message) {
+    ws.on('message', (message) => {
         try {
             //console.log('received: %s', message);
             var ret = onWsMessage(JSON.parse(message));

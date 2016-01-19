@@ -1,14 +1,14 @@
 {
   "name": "HaGUI",
   "description": "Home Automation GUI",
-  "version": "0.0.1",
+  "version": "0.2.0",
   "private": true,
   "dependencies": {
-      "xml2js" : "latest",
-      "ws" : "latest",
-      "async" : "latest",
-      "oauth" : "latest",
-      "underscore" : "latest",
-      "telldus-live" : "latest"
+    "async": "latest",
+    "oauth": "latest",
+    "telldus-live": "latest",
+    "underscore": "latest",
+    "ws": "latest",
+    "xml2js": "latest"
   }
 }

@@ -1,6 +1,8 @@
-var measure = require('./measure.js');
+var measure = require('./measure.js'),
+    log     = require('./log.js');
 
-var simFast = false,
+var simFast = true,
+    gCounter = 0,
     gEmitter,
     gTimer1,
     gTime = new Date(),
@@ -45,33 +47,28 @@ function simOffset(value, min, max)
 //--------------------------------------------------------------------------------
 function timer1simulated()
 {
-    console.log("timer1simulated");
+    //console.log("timer1simulated");
     
     gTime.setMinutes(gTime.getMinutes() + 10);
     
     item.time = new Date(gTime);
     simData.forEach(function(data) {
-       data.value += simOffset(data.value, data.min, data.max);
-       item.setItem(data.name, data.value); 
+        data.value += simOffset(data.value, data.min, data.max);
+        item.setItem(data.name, data.value);       
     });
     
     gEmitter.emit("measure", item);
-    
-/*    item.print(gMeasures);
-    
-    var c = sche.toClock2(gTime);
-    s.tick(c);
-
-    if (gMeasures.length > 300) {
-        gMeasures.shift();
+    gCounter++;
+    if (gCounter > 300) {
         if (simFast) {
             log.normal("slow mode updating simulated data");
             simFast = false;
             clearInterval(gTimer1);
             gTimer1 = setInterval(timer1simulated, 2000);
-        }
+        }    
     }
-    */
+    
+    gEmitter.emit("tick", gTime);
 }
 
 //-------------------------------------------------------------------------------
@@ -94,8 +91,40 @@ function start()
   });*/
 }
 
+//--------------------------------------------------------------------------------
+function action(name, state)
+{
+    var stateNames = ['off', 'on'];
+
+    log.normal(name + ' ' + stateNames[state]);
+    
+    switch (name) {
+    case measure.ACTION_CAR1:
+        break;
+    case measure.ACTION_CAR2:
+        break;
+    case measure.ACTION_LIGHT:
+        break;
+    case measure.ACTION_LIGHT2:
+        break;
+    case measure.ACTION_ROOM:
+        break;
+    case measure.ACTION_WEAT:
+        break; 
+    }
+}
+
+//--------------------------------------------------------------------------------
+function time()
+{
+    return gTime;
+}
+
 //-----------------------------------------------------------------------------
 module.exports = {
     init:  init,
-   	start: start
+   	start: start,
+    action: action,
+    time: time,
+    isSimulated: true
 };

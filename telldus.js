@@ -19,7 +19,6 @@ class Telldus
         this._cloud.on('error', function(err) {
             log.error('telldus error: ' + err.message);
         });
-
     }
     
     init(cb)
