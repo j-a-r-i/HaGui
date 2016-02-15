@@ -1,5 +1,6 @@
 *~
 node_modules
-html
 wfs.xml
 config.json
+/loadavg.txt
+/meminfo.txt
