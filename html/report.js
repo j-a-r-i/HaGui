@@ -1,4 +1,4 @@
-var cmd = require('./commands.js');
+//var cmd = require('./commands.js');
 
 //var wsUri = "ws://192.168.100.40:8080/";
 var wsUri = "ws://localhost:8080/";
