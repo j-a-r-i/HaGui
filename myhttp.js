@@ -14,12 +14,13 @@ function get(url, callback)
         res.on('data', function(d) {
             body += d;
         });
-        res.on('error', function(e) {
-            callback(e, null);
-        });
         res.on('end', function() {
 	        callback(null, body);
         });
+    })
+    .on('error', (e) => {
+        console.log(e.code + ' in ' + url);
+        callback(e.code);
     });
 }
 
