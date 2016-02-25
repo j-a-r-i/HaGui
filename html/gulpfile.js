@@ -22,7 +22,10 @@ gulp.task('javascript', function() {
 
 gulp.task('html', ['javascript'], function() {
     return gulp.src('report.html')
-        .pipe(inline())
+        .pipe(inline({
+                compress: false,
+                pretty: true
+        }))
         .pipe(inject(gulp.src([htmlFiles]),{
             starttag: '<!-- inject:html -->',
             transform: function(filepath, file) {

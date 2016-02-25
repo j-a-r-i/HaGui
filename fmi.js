@@ -120,7 +120,6 @@ function fmiRead(simulated, cb)
     else {
         myhttp.get(url, function(err, html) {
             if (!!err) {
-                console.log(err);
                 return cb(err, null);
             }
     /*        fs.writeFile("wfs.xml", html, function(err) {

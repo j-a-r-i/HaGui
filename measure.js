@@ -8,13 +8,6 @@ var SENSORS_NAMES = ["ulko.temp",
                      "varasto.temp",
                      "varasto.humidity"];
 
-/*const ACTION_CAR1 = "car1";
-const ACTION_CAR2 = "car2";
-const ACTION_LIGHT = "light";
-const ACTION_LIGHT2 = "light2";
-const ACTION_ROOM = "room";
-const ACTION_WEAT = "weather";
-*/
 //--------------------------------------------------------------------------------
 function oneDecimal(x) 
 {
