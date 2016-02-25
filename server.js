@@ -4,9 +4,14 @@
  */
 var version = "0.2.0";
 
+const SERVER_PORT=8090;
+const WS_PORT=8080;
+
 var WebSocket  = require('ws').Server,
     events     = require('events'),
-    wss        = new WebSocket({port: 8080}),
+    http       = require('http'),
+    fs         = require('fs'),
+    wss        = new WebSocket({port: WS_PORT}),
     config     = require('./config.json'),
     sche       = require('./scheduler.js'),
     fmi        = require('./fmi.js'),
@@ -180,8 +185,12 @@ else {
     s.genHtml();
     emitter.emit("temp", -12.0);
 }
+
+//------------------------------------------------------------------------------
+// The web socket
+//
 wss.on('connection', (ws) => {
-    
+    console.log("WebSocket opened.");
     ws.on('message', (message) => {
         try {
             //console.log('received: %s', message);
@@ -198,6 +207,33 @@ wss.on('connection', (ws) => {
     });
 });
 
+//------------------------------------------------------------------------------
+// The web server
+//
+var server = http.createServer((req,res) => {
+    var filename = 'html/dist/report.html';
+    var stat     = fs.statSync(filename);
+    
+    res.writeHead(200, {
+        'Content-Type': 'text/html',
+        'Content-Length': stat.size });
+
+    var reader = fs.createReadStream(filename);
+
+    res.on('error', (err) => {
+        reader.end();
+    });
+
+    reader.pipe(res);
+    //res.end('It <b>Works</b>!! Path Hit: ' + req.url);    
+});
+
+server.listen(SERVER_PORT, () => {
+    console.log("Server listening on: http://localhost:%s", SERVER_PORT);
+});
+
+
+//------------------------------------------------------------------------------
 process.on('exit', () => {
     console.log("Shutting down server.js");
 });
