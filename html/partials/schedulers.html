@@ -1,7 +1,7 @@
 <br/>
 <div class="container">
   <div ng-repeat="item in items">
-	<form ng-submit="submit({{item.name}})" ng-controller="ScheController">
+	<form ng-submit="submit({{item.name}})" ng-controller="ScheCtrl">
   	<fieldset>
       <legend><b>{{item.name}}</b></legend>
       <div ng-repeat="val in item.values">

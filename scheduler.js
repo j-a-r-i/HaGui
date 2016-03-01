@@ -293,7 +293,16 @@ class Scheduler {
 			}
 		});				
 	}
-	
+
+    get(action)
+    {
+		this._actions.forEach(function(act) {
+			if (act.name === action) {
+				return act.values();
+			}
+		});
+    }
+    
     setVal(action, sname, value)  // not used anymore
 	{
 		this._actions.forEach(function(act) {
@@ -321,9 +330,9 @@ class Scheduler {
 	
 	genHtml()
 	{
-		var fout = fs.createWriteStream('partials/config2.html');
+		var fout = fs.createWriteStream('html/partials/config2.html');
 		this._actions.forEach(function(act) {
-			fout.write('<form ng-submit="submit1(\''+act.name+'\')" ng-controller="HaCtrlController">\n');
+			fout.write('<form ng-submit="submit1(\''+act.name+'\')" ng-controller="ConfigCtrl">\n');
 			fout.write('  <fieldset>\n');
 			fout.write('    <legend><b>'+act.name+'</b></legend>\n');
 			act._exports.forEach((name) => {

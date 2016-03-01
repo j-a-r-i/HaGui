@@ -13,7 +13,9 @@ const CMD_DATA3 ="cmd3";
 const CMD_WEATHER = "cmd4";
 const CMD_STATUS = "stat";
 const CMD_SETVAL = "sval";
+const CMD_GETVAL = "gval";
 const CMD_SCHEDULERS = "sche1";
+const CMD_PING = "ping";
 
 
 google.load("visualization", "1", {packages:["corechart","table"]});
@@ -170,34 +172,30 @@ var app = angular.module('haApp', ['ngRoute']);
 app.config(function($routeProvider) {
     $routeProvider
         .when('/', {
-	        controller: 'HaController',
+	        controller: 'HomeCtrl',
 	        templateUrl: 'partials/home.html'
         })
         .when('/home', {
-	        controller: 'HaController',
+	        controller: 'HomeCtrl',
 	        templateUrl: 'partials/home.html'
         })
         .when('/config', {
-	        controller: 'HaCtrlController',
+	        controller: 'ConfigCtrl',
 	        templateUrl: 'partials/config.html'
         })
         .when('/status', {
-	        controller: 'HaStatController',
+	        controller: 'StatusCtrl',
 	        templateUrl: 'partials/status.html'
         })
-        .when('/actions', {
-	        controller: 'ActController',
-	        templateUrl: 'partials/actEditor.html'
-        })
         .when('/schedulers', {
-	        controller: 'ScheController',
+	        controller: 'ScheCtrl',
 	        templateUrl: 'partials/schedulers.html'
         })
         .otherwise({ redirecTo: '/' });
 });
 
-app.controller('HaController', ['$scope', function ($scope) {
-  console.log("HaController");
+app.controller('HomeCtrl', ['$scope', function ($scope) {
+  console.log("HomeCtrl");
   $scope.commands = [CMD_DATA1,
                      CMD_DATA2,
                      CMD_DATA3];
@@ -215,33 +213,33 @@ function createDate(hour, min)
     return ret;
 }
 
-app.controller('HaCtrlController', ['$scope', function ($scope) {
-    $scope.car1Leave = createDate(7,35);    
-    $scope.car2Leave = createDate(8,15);
-    $scope.lightStart = createDate(16, 0);
-    $scope.lightStop  = createDate(20, 30);
+app.controller('ConfigCtrl', ['$scope', function ($scope) {
+    send(CMD_GETVAL, {action:'car1'})
+    .then(function(msg) {
+        $scope.car1 = msg.values;
+        $scope.$apply();
+    });
+    //$scope.car1={}
+    //$scope.car1.leaveTime = createDate(7,35);
+    $scope.car2={}
+    $scope.car2.leaveTime = createDate(8,15);
+    $scope.light={}
+    $scope.light.startTime = createDate(16, 0);
+    $scope.light.stopTime  = createDate(20, 30);
+    $scope.weather={}
+    $scope.weather.interval = 45;
     
-    $scope.submit1 = function() {
+    $scope.submit1 = function(name) {
         var date = new Date($scope.car1Leave);
 
-        send(CMD_SETVAL, { action: 'car1', 
+        send(CMD_SETVAL, { action: name, 
                            values: { leaveTime: [date.getHours(), date.getMinutes()] }
                          });
         console.log("CAR1 :" + $scope.car1Leave);
     };
-    $scope.submit2 = function() {
-        var date = new Date($scope.car2Leave);
-
-        send(CMD_SETVAL, { action: 'car2', 
-                           values: { leaveTime: [date.getHours(), date.getMinutes()] }
-                         });
-        console.log("CAR2 :" + $scope.car2Leave);
-    };
-    $scope.submit3 = function() {
-   };
 }]);
 
-app.controller('HaStatController', ['$scope', function ($scope) {
+app.controller('StatusCtrl', ['$scope', function ($scope) {
     send(CMD_STATUS, {})
     .then(function(msg) {
         $scope.ver = msg.ver;
@@ -256,23 +254,17 @@ app.controller('HaStatController', ['$scope', function ($scope) {
     };
 }]);
 
-app.controller('ActController', ['$scope', function ($scope) {
-    $scope.actions = [{name:"Car1",       url:"partials/actionCar.html"},
-                      {name:"Car2",       url:"partials/actionCar.html"},
-                      {name:"Interval",   url:"partials/actionInterval.html"},
-                      {name:"Range",      url:"partials/actionRange.html"},                  
-    ];
-    
-    $scope.action = $scope.actions[0];
-}]);
-
-app.controller('ScheController', ['$scope', function($scope) {
+app.controller('ScheCtrl', ['$scope', function($scope) {
     send(CMD_SCHEDULERS, {})
     .then(function(msg) {
         $scope.items = msg.items;
         $scope.$apply();
     });
 
+    $scope.submit = function(name) {
+        alert(name);
+    }
+    
     $scope.conv = function(name, val) {
         if (name.indexOf("Time") > 0) {
             var hours = Math.floor(val / 60);

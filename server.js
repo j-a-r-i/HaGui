@@ -36,7 +36,9 @@ const CMD_DATA3 ="cmd3";
 const CMD_WEATHER ="cmd4";
 const CMD_STATUS = "stat";
 const CMD_SETVAL = "sval";
+const CMD_GETVAL = "gval";
 const CMD_SCHEDULERS = "sche1";
+const CMD_PING = "ping";
 
 //--------------------------------------------------------------------------------
 function onWsMessage(message)
@@ -84,6 +86,10 @@ function onWsMessage(message)
         s.set(message.action, message.values);
         break;
 
+    case CMD_GETVAL:
+        resp.values = s.get(message.action);
+        break;
+        
     case CMD_SCHEDULERS:
         //resp.items = ['one', 'two', 'three'];
         var lst = [];
@@ -94,6 +100,10 @@ function onWsMessage(message)
             lst.push(i);
         });
         resp.items = lst;
+        break;
+
+    case CMD_PING:
+        resp.ping = 1;
         break;
         
     default:
@@ -179,6 +189,7 @@ s.add(new sche.RoomHeaterAction(measure.ACTION_ROOM, emitter, function(action, s
 s.load();
 
 if (engine.isSimulated === false) {
+    //s.genHtml();
     s.start();
 }
 else {
