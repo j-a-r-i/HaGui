@@ -1,8 +1,9 @@
 "use strict";
 /*
- * Copyright (C) 2015 Jari Ojanen
+ * Copyright (C) 2015-6 Jari Ojanen
+ *
+ * See http://ilmatieteenlaitos.fi/tallennetut-kyselyt
  */
-// http://ilmatieteenlaitos.fi/tallennetut-kyselyt
 
 var fs = require("fs"),
     myhttp = require('./myhttp'),
@@ -11,11 +12,37 @@ var fs = require("fs"),
 
 var url = "http://data.fmi.fi/fmi-apikey/" + config.fmi_key + "/wfs?request=getFeature&storedquery_id=fmi::forecast::hirlam::surface::point::multipointcoverage&place=oittaa";
 
-url += "&parameters=temperature,dewpoint,windspeedms";
+url += "&parameters=temperature,dewpoint,windspeedms,precipitation1h";
 
+const FIELD_NONE = -1;
 const FIELD_TEMP = 0;
 const FIELD_DP = 1;
 const FIELD_WIND = 2;
+const FIELD_RAIN = 3;
+
+//-----------------------------------------------------------------------------
+class FmiField {
+    constructor(fid, name) {
+        this.fieldId = fid;
+        this.name = name;
+    }
+
+    parse(arr) {
+        if (this.fieldId == FIELD_NONE)
+            return "";
+        return parseFloat(arr[this.fieldId]);
+    }
+};
+
+
+var FIELDS = [
+    new FmiField(FIELD_NONE, "date"),
+    new FmiField(FIELD_TEMP, "temp"),
+    new FmiField(FIELD_DP,   "dp"),
+    new FmiField(FIELD_WIND, "wind"),
+    new FmiField(FIELD_RAIN, "rain")
+];
+
 
 //-----------------------------------------------------------------------------
 // not used anymore
@@ -53,7 +80,7 @@ function parseXml(buf, cb)
                     'omso:GridSeriesObservation',
                     'om:result',
                     'gmlcov:MultiPointCoverage'];
-                    
+        
         for (let i=0; i<path.length; i++) {
             if (i === 0)
                 n = n[path[i]];
@@ -74,13 +101,12 @@ function parseXml(buf, cb)
             i = i.trim();
             if (i.length === 0)
                 return null;
-                
+            
             var ret = i.split(" ");
             
-            return {date: "",
-                    temp: ret[FIELD_TEMP],
-                    wind: ret[FIELD_WIND],
-                    dp: ret[FIELD_DP]};
+            return FIELDS.map(function(i) {
+                return i.parse(ret);
+            });
         });
         
         d = d['gmlcov:SimpleMultiPoint'][0];
@@ -100,9 +126,13 @@ function parseXml(buf, cb)
         var i;
         for (i=0; i<arr.length; i++) {
             if (arr[i] !== null)
-                arr[i].date = arr2[i];
+                arr[i][0] = arr2[i];
         }
         //console.log(arr.length + " , " +  arr2.length);
+
+        arr.unshift(FIELDS.map(function(i) {
+            return i.name;
+        }));
     });
     cb(null, arr);
 }

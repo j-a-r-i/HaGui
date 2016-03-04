@@ -1,8 +1,8 @@
 "use strict";
 /*
- * Copyright (C) 2015 Jari Ojanen
+ * Copyright (C) 2015-6 Jari Ojanen
  */
-var version = "0.2.0";
+var version = "0.3.0";
 
 const SERVER_PORT=8090;
 const WS_PORT=8080;
@@ -19,7 +19,7 @@ var WebSocket  = require('ws').Server,
     log        = require('./log.js'),
     dweet      = require('./dweet.js'),
     measure    = require('./measure.js'),
-    engine     = require('./engineReal.js');
+    engine     = require('./engineSim.js');
 
 var 
     gMeasures = [],
@@ -30,48 +30,50 @@ var
     emitter = new events.EventEmitter(),
     emitterMeas = new events.EventEmitter();
 
-const CMD_DATA1 ="cmd1";
-const CMD_DATA2 ="cmd2";
-const CMD_DATA3 ="cmd3";
-const CMD_WEATHER ="cmd4";
-const CMD_STATUS = "stat";
-const CMD_SETVAL = "sval";
-const CMD_GETVAL = "gval";
-const CMD_SCHEDULERS = "sche1";
+const CMD_MEASURES = "meas";
+const CMD_LATEST   = "last";
+const CMD_WEATHER  = "weat";
+const CMD_STATUS   = "stat";
+const CMD_SETVAL   = "sval";
+const CMD_GETVAL   = "gval";
+const CMD_SCHEDULERS = "sche";
 const CMD_PING = "ping";
 
 //--------------------------------------------------------------------------------
 function onWsMessage(message)
 {
     var resp = { cmd: message.cmd };
-    var arr = [];
 
-    log.normal("Executing " + message.cmd);
+    log.normal("executing " + message.cmd);
     
     switch (message.cmd) {
-    case CMD_DATA1:
-        arr.push(['time', 't1', 't2']);       
-        gMeasures.forEach( function(item) {
-            arr.push([item.time, item.t1, item.t2]);
+    case CMD_MEASURES:
+        var m = new measure.MeasureData();
+        var arr = [m.header()];
+
+        gMeasures.forEach(function(i) {
+            arr.push(i);
         });
+        m = null;
+       
+        resp.data = arr;
         break;
 
-    case CMD_DATA2:
-        arr.push(['time', 'humidity']);       
-        gMeasures.forEach( function(item) {
-            arr.push([item.time, item.h1]);
-        });
-        break;
-
-    case CMD_DATA3:
-        arr.push(['location', 'temperature']);
+    case CMD_LATEST:
         var item = gMeasures[gMeasures.length - 1];
-        arr.push(['ulko', item.t1]);
-        arr.push(['varasto', item.t2]);
+        var m = new measure.MeasureData();
+        var headers = m.header();
+        var obj = {}
+
+        for (var i in headers) {
+            obj[headers[i]] = item[i];
+        };
+
+        resp.values = obj;
         break;
 
     case CMD_WEATHER:
-        arr = gWeather;
+        resp.data = gWeather;
         break;
 
     case CMD_STATUS:
@@ -112,9 +114,6 @@ function onWsMessage(message)
         break;
     }
 
-    if (arr.length > 0)
-        resp.data = arr;
-
     return resp;
 }
 
@@ -128,7 +127,10 @@ log.history(gTime, "time: " + sche.toClock2(gTime));
 
 emitterMeas.on("measure", (data) => {
     gMeasures.push(data.values());
-    myDweet.send(data);
+    console.log(gMeasures.length);
+    
+    if (!engine.isSimulated)
+        myDweet.send(data);
             
     //if (simulated === false)
     emitter.emit("temp", data.temp2);

@@ -7,6 +7,8 @@ var http = require('http'),
     https = require('https');
 
 //-----------------------------------------------------------------------------
+/** http get without promise.
+ */
 function get(url, callback)
 {
     return http.get(url, function(res) {
@@ -25,6 +27,8 @@ function get(url, callback)
 }
 
 //-----------------------------------------------------------------------------
+/** http get with promise.
+ */
 function getp(url)
 {
     return new Promise((resolve,reject) => {
@@ -44,9 +48,9 @@ function getp(url)
 }
 
 //-----------------------------------------------------------------------------
-// https request
-//
-function requests(options)
+/** https request with promise.
+ */
+function requests(options, parseJson)
 {
     return new Promise((resolve,reject) => {
         var r = https.request(options, (res) => {
@@ -60,7 +64,10 @@ function requests(options)
                 data += d;
             });
             res.on('end', () => {
-                resolve(JSON.parse(data.toString()));
+                if (parseJson)
+                    resolve(JSON.parse(data.toString()));
+                else
+                    resolve(data.toString());
             });          
         });
         r.end();

@@ -7,10 +7,9 @@ var stat = null;
 var callbacks = {};
 var websocket = null;
 
-const CMD_DATA1 ="cmd1";
-const CMD_DATA2 ="cmd2";
-const CMD_DATA3 ="cmd3";
-const CMD_WEATHER = "cmd4";
+const CMD_MEASURES = "meas";
+const CMD_LATEST   = "last";
+const CMD_WEATHER  = "weat";
 const CMD_STATUS = "stat";
 const CMD_SETVAL = "sval";
 const CMD_GETVAL = "gval";
@@ -20,6 +19,7 @@ const CMD_PING = "ping";
 
 google.load("visualization", "1", {packages:["corechart","table"]});
 
+//------------------------------------------------------------------------------
 function init()
 {
     //output = document.getElementById("output");
@@ -31,50 +31,56 @@ function init()
     websocket.onerror = onError;
 }
 
+//------------------------------------------------------------------------------
 function updateWeather()
 {
     send(CMD_WEATHER, {})
     .then(function(msg) {
-        var arr = [["Time", "Temp"]];
-        var data = msg.data;
-        data.forEach(function(i) {
-           if (i != null) {
-               arr.push([new Date(i.date), parseFloat(i.temp)]);
-           } 
+        var arr = [];
+        msg.data.forEach(function(i) {
+            arr.push([new Date(i[0]), i[1], i[3]]);
         });
-        drawLine("chart4", "Forecast", arr, false);
+        drawLine("chart4", "Forecast", arr);
     });
 }
 
-
+//------------------------------------------------------------------------------
 function updateCharts()
 {
-    send(CMD_DATA1, {})
-    .then(function (msg) {
-        console.log(msg);
-        drawLine("chart1", "Temperature", msg.data, true);
-        return send(CMD_DATA2, {});
-    })
-    .then(function (msg) {
-        console.log(msg);
-        drawLine("chart2", "Humidity", msg.data, true);
-        return send(CMD_DATA3, {});
-    })
-    .then(function (msg) {
-        drawTable("chart3", "None", msg.data, true);
-        console.log(data);               
-    })
+    send(CMD_MEASURES, {})
+        .then(function (msg) {
+            var arr = []; //[["time", "t1", "t2", "t3"]];
+            
+            msg.data.forEach(function(i) {
+                arr.push([new Date(i[0]), i[1], i[2], i[3]]);
+            });
+            drawLine("chart1", "Temperature", arr);
+
+            var arr2 = []; //[["time", "h1"]];
+            msg.data.forEach(function(i) {
+                arr2.push([new Date(i[0]), i[4]]);
+            });
+            drawLine("chart2", "Humidity", arr2);
+            
+            return send(CMD_LATEST, {});
+        })
+        .then(function (msg) {
+            drawTable("chart3", "None", msg.data, true);
+        })
 }
 
+//------------------------------------------------------------------------------
 function onOpen(evt)
 {
     updateCharts();
 }
 
+//------------------------------------------------------------------------------
 function onClose(evt)
 {
 }
 
+//------------------------------------------------------------------------------
 function drawPie(ctrl, name, msg)
 {
     var resp = JSON.parse(msg);
@@ -85,22 +91,9 @@ function drawPie(ctrl, name, msg)
     chart.draw(data, options);
 }
 
-function drawLine(ctrl, name, msg, parse)
+function drawLine(ctrl, name, arr)
 {
-    var resp2;
-    
-    if (parse === true) {
-        resp2 = msg.map(function(line) {
-            if (line[0] === "time")
-                return line;
-            line[0] = new Date(line[0]);
-            return line;
-        });
-    }
-    else {
-        resp2 = msg;
-    }
-    var data = google.visualization.arrayToDataTable(resp2);
+    var data = google.visualization.arrayToDataTable(arr);
     var options = { title: name,
                     curveType: 'none',
                     hAxis: { format: 'HH:mm' },
@@ -196,9 +189,8 @@ app.config(function($routeProvider) {
 
 app.controller('HomeCtrl', ['$scope', function ($scope) {
   console.log("HomeCtrl");
-  $scope.commands = [CMD_DATA1,
-                     CMD_DATA2,
-                     CMD_DATA3];
+  $scope.commands = [CMD_MEASURES,
+                     CMD_LATEST];
 }]);
 
 function createDate(hour, min)

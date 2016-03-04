@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2015-6 Jari Ojanen
+ */
 var measure = require('./measure.js'),
     log     = require('./log.js');
 
@@ -8,23 +11,28 @@ var simFast = true,
     gTime = new Date(),
     item = new measure.MeasureData();
 
-///@TODO: this is duplicate remote it.
-const SENSORS_NAMES = ["ulko.temp",
-                       "varasto.temp",
-                       "varasto.humidity"];
 
-var simData = [ { name: SENSORS_NAMES[0],
-                  value: 2.0,
-                  min: -5.0,
-                  max: 5.0},
-                { name: SENSORS_NAMES[1],
-                  value: 10.0,
-                  min: 5.0,
-                  max: 15.0},
-                { name: SENSORS_NAMES[2],
-                  value: 40.0,
-                  min: 30.0,
-                  max: 60.0}];
+const INDEX_T1 = 0;
+const INDEX_T2 = 1;
+const INDEX_T3 = 2;
+const INDEX_H1 = 3;
+
+item.items[INDEX_T1].value = 2.0;
+item.items[INDEX_T1].min = -5.0;
+item.items[INDEX_T1].max = 5.0;
+
+item.items[INDEX_T2].value = 10.0;
+item.items[INDEX_T2].min = 5.0;
+item.items[INDEX_T2].max = 10.0;
+
+item.items[INDEX_T3].value = 22.0;
+item.items[INDEX_T3].min = 18.0;
+item.items[INDEX_T3].max = 23.0;
+
+item.items[INDEX_H1].value = 40.0;
+item.items[INDEX_H1].min = 30.0;
+item.items[INDEX_H1].max = 60.0;
+
 
 //--------------------------------------------------------------------------------
 function random (low, high)
@@ -33,15 +41,15 @@ function random (low, high)
 }
 
 //--------------------------------------------------------------------------------
-function simOffset(value, min, max)
+function simOffset(item)
 {
     var offset = random(-0.5, 0.5);
 
-    if (value < min)
+    if (item.value < item.min)
 	   offset = Math.abs(offset);
-    if (value > max)
+    if (item.value > item.max)
 	   offset = -Math.abs(offset);
-    return offset;
+    item.value += offset;
 }
 
 //--------------------------------------------------------------------------------
@@ -51,10 +59,9 @@ function timer1simulated()
     
     gTime.setMinutes(gTime.getMinutes() + 10);
     
-    item.time = new Date(gTime);
-    simData.forEach(function(data) {
-        data.value += simOffset(data.value, data.min, data.max);
-        item.setItem(data.name, data.value);       
+    item.tm = new Date(gTime);
+    item.items.forEach((i) => {
+        simOffset(i);
     });
     
     gEmitter.emit("measure", item);

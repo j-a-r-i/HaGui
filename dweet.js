@@ -9,6 +9,7 @@ var http = require('./myhttp'),
 const SITE = "dweet.io";
 const NAME = "ha.joj.home";
 
+//------------------------------------------------------------------------------
 class Dweet {
     constructor() {
     }
@@ -20,14 +21,23 @@ class Dweet {
                         method: meth
                         };
         
-        return http.requests(options);
+        return http.requests(options, true);
     }
     
     send(data) {
         this.post("/dweet/for/"+NAME+"?"+querystring.stringify(data), "POST")
-        .then((val) => {
-            console.log(val);
-        });
+            .then((val) => {
+                switch (val.this) {
+                case  "failed":
+                    console.log("Error dweet: " + val.because);
+                    break;
+                case "succeeded":
+                    break;
+                default:
+                    console.log(val);
+                    break;
+                }
+            });
     }
     
     read() {

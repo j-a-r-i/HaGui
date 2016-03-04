@@ -18,9 +18,11 @@ const stocks = [
     'HEX35363', // Orion B
 ];
 
-const SITE = "http://www.nasdaqomxnordic.com";
+const SITE = "https://www.nasdaqomxnordic.com";
 
 //-----------------------------------------------------------------------------
+/** Interface to read stock data.
+ */
 class Nasdaq {
     contructor() {
         this.name = "nasdaq";

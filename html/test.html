@@ -13,13 +13,14 @@ var wsUri = "ws://localhost:8080/";
 var websocket = null;
 var callbacks = {};
 
-const CMD_DATA1 ="cmd1";
-const CMD_DATA2 ="cmd2";
-const CMD_DATA3 ="cmd3";
-const CMD_WEATHER = "cmd4";
-const CMD_STATUS = "stat";
-const CMD_SETVAL = "sval";
-const CMD_SCHEDULERS = "sche1";
+const CMD_MEASURES = "meas";
+const CMD_LATEST   = "last";
+const CMD_WEATHER  = "weat";
+const CMD_STATUS   = "stat";
+const CMD_SETVAL   = "sval";
+const CMD_GETVAL   = "gval";
+const CMD_SCHEDULERS = "sche";
+const CMD_PING     = "ping";
 
 function init()
 {
@@ -72,13 +73,14 @@ window.addEventListener("load", init, false);
 var app = angular.module('testApp', ['ngRoute']);
 
 app.controller('TstController', ['$scope', function ($scope) {
-    $scope.commands = [CMD_DATA1,
-                       CMD_DATA2,
-                       CMD_DATA3,
+    $scope.commands = [CMD_MEASURES,
+                       CMD_LATEST,
 		    		   CMD_WEATHER,
 		  			   CMD_STATUS,
 					   CMD_SETVAL,
-					   CMD_SCHEDULERS];
+					   CMD_GETVAL,
+					   CMD_SCHEDULERS,
+                       CMD_PING];
     $scope.input = "{}";
     $scope.output = "";
     

@@ -1,12 +1,8 @@
 "use strict";
 /*
- * Copyright (C) 2015 Jari Ojanen
+ * Copyright (C) 2015-6 Jari Ojanen
  */
 var log        = require('./log.js');
-
-var SENSORS_NAMES = ["ulko.temp",
-                     "varasto.temp",
-                     "varasto.humidity"];
 
 //--------------------------------------------------------------------------------
 function oneDecimal(x) 
@@ -15,68 +11,62 @@ function oneDecimal(x)
 }
 
 //--------------------------------------------------------------------------------
+class MeasureItem {
+    constructor(shortName, name) {
+        this.value = -99.0;
+        this.name = name;
+        this.shortName = shortName;
+        this.unit = "";
+    }
+}
+
+//--------------------------------------------------------------------------------
 class MeasureData {
     constructor() {
-        this._time = new Date(0);
-        this._temp1 = -99.0;
-        this._temp2 = -99.0;
-        this._temp3 = -99.0;
-        this._humidity = -99.0;
+        this.tm = new Date(0);
+        this.items = [ new MeasureItem("t1", "ulko.temp"),
+                       new MeasureItem("t2", "varasto.temp"),
+                       new MeasureItem("t3", "other"),
+                       new MeasureItem("h1", "varasto.humidity") ];
     }
 
-    setItem(name, value) {
-        if (name == SENSORS_NAMES[0]) {
-            this._temp1 = oneDecimal(parseFloat(value));
-        }
-        else if (name == SENSORS_NAMES[1]) {
-            this._temp2 = oneDecimal(parseFloat(value));
-        }
-        else if (name == SENSORS_NAMES[2]) {
-            this._humidity = oneDecimal(parseFloat(value));
-        }
-    }
+    set(name, value) {
+        this.items.forEach( (x) => {
+            if (x.name == name) {
+                x.value = oneDecimal(parseFloat(value));
+            }
+        });
+    }                     
 
+    header() {
+        var resp = ['time'];
+        this.items.forEach( (x) => {
+            resp.push(x.shortName);
+        });
+        return resp;
+    }
+    
     values() {
-        var s = [this._temp1, this._temp2, this._temp3, this._humidity].join(', ');
-        log.normal(this._time.toLocaleTimeString() + ": " + s);
-        return { time: this._time,
-                 t1: this._temp1,
-                 t2: this._temp2,
-                 t3: this._temp3,
-                 h1: this._humidity
-                };
-    }
+        var resp = [this.tm];
+        this.items.forEach( (x) => {
+            resp.push(x.value);
+        });
+        return resp;
+    }                     
 
+        
     get time() {
-        return this._time;
+        return this.tm;
     }
     set time(value) {
-        this._time = value;
-    }
-    
-    get temp2() {
-        return this._temp2;
-    }
-    set temp2(value) {
-        this._temp2 = value;
-    }
-    
-    get temp3() {
-        return this._temp3;
-    }
-    set temp3(value) {
-        this._temp3 = value;
-    }
-    
-    set humidity2(value) {
-        this._humidity = value;
+        this.tm = value;
     }
 }
 
 //-----------------------------------------------------------------------------
 module.exports = {
 	MeasureData: MeasureData,
-    SENSORS_NAMES: SENSORS_NAMES,
+	MeasureItem: MeasureItem,
     
     ACTION_CAR1 : "car1",
     ACTION_CAR2 : "car2",

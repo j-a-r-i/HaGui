@@ -9,6 +9,8 @@ const SITE = "www.strava.com";
 const PATH = "/api/v3/athlete/activities?page=1&access_token=" + config.strava_key;
 
 //-----------------------------------------------------------------------------
+/** Interface to strava. See http://www.strava.com
+ */
 class Strava {
     contructor() {
         this.name = "strava";
@@ -24,7 +26,7 @@ class Strava {
                         method: 'GET'
             };
             
-            myhttp.requests(opt)
+            myhttp.requests(opt, true)
             .then((value) => {
                 self.result = [];
                 value.forEach((act) => {
