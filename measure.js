@@ -31,11 +31,16 @@ class MeasureData {
     }
 
     set(name, value) {
+	var found = false;
         this.items.forEach( (x) => {
             if (x.name == name) {
                 x.value = oneDecimal(parseFloat(value));
+		found = true;
             }
         });
+	if (found == false) {
+	    log.error("invalid measurement id: "+name);
+	}
     }                     
 
     header() {

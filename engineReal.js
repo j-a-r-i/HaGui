@@ -21,7 +21,7 @@ function timer1()
         item.time = new Date();              
         values.forEach((i) => {
             i.forEach((i2) => {
-                item.setItem(i2[0], i2[1]);             
+                item.set(i2[0], i2[1]);             
             });
         });
         
@@ -50,7 +50,7 @@ function init(emitter)
                 item.time = new Date();              
                 values.forEach((i) => {
                     i.forEach((i2) => {
-                        item.setItem(i2[0], i2[1]);             
+                        item.set(i2[0], i2[1]);             
                     });
                 });
                 gEmitter.emit("measure", item);
@@ -102,7 +102,7 @@ function time()
 //-----------------------------------------------------------------------------
 module.exports = {
     init:  init,
-	start: start,
+    start: start,
     action: action,
     time: time,
     isSimulated: false

@@ -19,7 +19,7 @@ var WebSocket  = require('ws').Server,
     log        = require('./log.js'),
     dweet      = require('./dweet.js'),
     measure    = require('./measure.js'),
-    engine     = require('./engineSim.js');
+    engine     = require('./engineReal.js');
 
 var 
     gMeasures = [],
@@ -60,16 +60,21 @@ function onWsMessage(message)
         break;
 
     case CMD_LATEST:
-        var item = gMeasures[gMeasures.length - 1];
-        var m = new measure.MeasureData();
-        var headers = m.header();
-        var obj = {}
+	if (gMeasures.length === 0) {
+	    resp.values = [];
+	}
+	else {
+            var item = gMeasures[gMeasures.length - 1];
+            var m = new measure.MeasureData();
+            var headers = m.header();
+            var obj = {}
+	    
+            for (var i in headers) {
+		obj[headers[i]] = item[i];
+            };
 
-        for (var i in headers) {
-            obj[headers[i]] = item[i];
-        };
-
-        resp.values = obj;
+            resp.values = obj;
+	}
         break;
 
     case CMD_WEATHER:
@@ -126,8 +131,9 @@ log.history(gTime, "HaGUI V" + version);
 log.history(gTime, "time: " + sche.toClock2(gTime));
 
 emitterMeas.on("measure", (data) => {
+    console.log("measure");
+    
     gMeasures.push(data.values());
-    console.log(gMeasures.length);
     
     if (!engine.isSimulated)
         myDweet.send(data);

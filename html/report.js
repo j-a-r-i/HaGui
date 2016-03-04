@@ -1,7 +1,7 @@
 //var cmd = require('./commands.js');
 
-//var wsUri = "ws://192.168.100.40:8080/";
-var wsUri = "ws://localhost:8080/";
+var wsUri = "ws://192.168.100.40:8080/";
+//var wsUri = "ws://localhost:8080/";
 //var output;
 var stat = null;
 var callbacks = {};
@@ -38,7 +38,7 @@ function updateWeather()
     .then(function(msg) {
         var arr = [];
         msg.data.forEach(function(i) {
-            arr.push([new Date(i[0]), i[1], i[3]]);
+            arr.push([new Date(i[0]), i[1], i[2], i[3]]);
         });
         drawLine("chart4", "Forecast", arr);
     });
@@ -49,10 +49,10 @@ function updateCharts()
 {
     send(CMD_MEASURES, {})
         .then(function (msg) {
-            var arr = []; //[["time", "t1", "t2", "t3"]];
+            var arr = [];
             
             msg.data.forEach(function(i) {
-                arr.push([new Date(i[0]), i[1], i[2], i[3]]);
+                arr.push([new Date(i[0]), i[1], i[2]]);
             });
             drawLine("chart1", "Temperature", arr);
 
@@ -97,6 +97,8 @@ function drawLine(ctrl, name, arr)
     var options = { title: name,
                     curveType: 'none',
                     hAxis: { format: 'HH:mm' },
+		    chartArea: {width: '85%',
+				height: '75%'},
                     legend: { position: 'bottom' }
                   };
 
