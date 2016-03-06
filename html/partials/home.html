@@ -2,10 +2,6 @@
     <div ng-controller="HomeCtrl">
     <form action = "">
        <fieldset>
-        <!--button type = "button"
-                onclick = "connect()">
-          connect
-        </button -->
          <button type = "button"
                 onclick = "updateCharts()">
           Charts
@@ -14,16 +10,20 @@
                 onclick = "updateWeather()">
           Weather
         </button>
-        <!--button type = "button"
-                onclick = "websocket.close()">
-          disconnect
-        </button -->
       </fieldset>
     </form>
     </div>
   </div>
 <br/>
 <div class="container">
+   <aside>
+     <table border="0">
+       <tr ng-repeat="x in values">
+	 <td bgcolor="lightgrey">{{x.name}}</td>
+	 <td><b>{{x.value}}</b></td>
+       </tr>
+     </table>
+   </aside>
    <div class="chartbox">
      <div id="chart1" style="width: 580px; height: 300px;"></div>
    </div>
@@ -33,11 +33,8 @@
    <div class="chartbox">
      <div id="chart4" style="width: 580px; height: 300px;"></div>
    </div>
-   <div class="chartbox">
-     <div id="chart3" style="width: 580px; height: 300px;"></div>
-   </div>
-  <fieldset>
+  <!-- fieldset>
     <legend>logging</legend>
     <div id="output"></div>
-  </fieldset>
+  </fieldset -->
 </div>

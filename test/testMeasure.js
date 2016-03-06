@@ -13,7 +13,7 @@ function prettyJson(obj)
         if (key === "items") {
             var obj2 = obj[key];
             for (var key2 in obj2) {
-                if (obj2[key2] instanceof measure.MeasureItem) {
+                if (obj2[key2] instanceof measure.MeasureValue) {
                     dup[obj2[key2].shortName] = obj2[key2].value;
                 }
             }

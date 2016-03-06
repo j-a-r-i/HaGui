@@ -5,16 +5,29 @@
 var histories = [];
 var errors = [];
 
+/** Add string to log (verbose level).
+ *
+ * @param {string} msg Message to be logged
+ */
 function verbose(msg)
 {
 	// do nothing	
 }
 
+/** Add string to log (normal level).
+ *
+ * @param {string} msg Message to be logged
+ */
 function normal(msg)
 {
 	console.log(msg);
 }
 
+/** Add string to history.
+ *
+ * @param {Date}   d   Time when event happend
+ * @param {string} msg Message to be logged
+ */
 function history(d, msg)
 {
 	//var d = new Date();
@@ -28,6 +41,10 @@ function history(d, msg)
 	console.log(s);
 }
 
+/** Add string to log (error level).
+ *
+ * @param {string} msg Error to be logged
+ */
 function error(msg)
 {
 	errors.push(msg);

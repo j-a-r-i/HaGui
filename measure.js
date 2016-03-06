@@ -11,7 +11,7 @@ function oneDecimal(x)
 }
 
 //--------------------------------------------------------------------------------
-class MeasureItem {
+class MeasureValue {
     constructor(shortName, name) {
         this.value = -99.0;
         this.name = name;
@@ -24,10 +24,10 @@ class MeasureItem {
 class MeasureData {
     constructor() {
         this.tm = new Date(0);
-        this.items = [ new MeasureItem("t1", "ulko.temp"),
-                       new MeasureItem("t2", "varasto.temp"),
-                       new MeasureItem("t3", "other"),
-                       new MeasureItem("h1", "varasto.humidity") ];
+        this.items = [ new MeasureValue("t1", "ulko.temp"),
+                       new MeasureValue("t2", "varasto.temp"),
+                       new MeasureValue("t3", "other"),
+                       new MeasureValue("h1", "varasto.humidity") ];
     }
 
     set(name, value) {
@@ -71,7 +71,7 @@ class MeasureData {
 //-----------------------------------------------------------------------------
 module.exports = {
 	MeasureData: MeasureData,
-	MeasureItem: MeasureItem,
+	MeasureValue: MeasureValue,
     
     ACTION_CAR1 : "car1",
     ACTION_CAR2 : "car2",

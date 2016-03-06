@@ -13,7 +13,7 @@ const CMD_WEATHER  = "weat";
 const CMD_STATUS = "stat";
 const CMD_SETVAL = "sval";
 const CMD_GETVAL = "gval";
-const CMD_SCHEDULERS = "sche1";
+const CMD_SCHEDULERS = "sche";
 const CMD_PING = "ping";
 
 
@@ -193,6 +193,12 @@ app.controller('HomeCtrl', ['$scope', function ($scope) {
   console.log("HomeCtrl");
   $scope.commands = [CMD_MEASURES,
                      CMD_LATEST];
+    
+    $scope.values = [
+	{ name:"t1", value:2.1 },
+	{ name:"t2", value:3.1 },
+	{ name:"t3", value:4.1 }
+    ];
 }]);
 
 function createDate(hour, min)
