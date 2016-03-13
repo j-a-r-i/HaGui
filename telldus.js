@@ -4,9 +4,92 @@
  */
 
 var TAPI   = require('telldus-live'),
+    TAPI2  = require('./telldusApi'),
     config = require('./config.json'),
     log    = require('./log.js');
 
+//------------------------------------------------------------------------------
+class TelldusV2
+{
+    constructor()
+    {
+        this._sensors = [];
+        this._devices = [];
+        this._cloud = new TAPI2.TelldusApi(config.publicKey,
+					   config.privateKey,
+					   config.token,
+					   config.secret);
+    }
+
+    init(cb)
+    {
+        var self = this;
+        
+        this._cloud.getSensors((err, sensors) => {
+            if (!!err) {
+                log.error(err);
+                cb(err); 
+                return;
+            }
+            self._sensors = sensors.sensor;
+            
+            this._cloud.getDevices((err, devices) => {
+                if (!!err) {
+                    log.error(err);
+                    cb(err); 
+                    return;
+                }
+                self._devices = devices.device;
+                cb(null);
+            });
+        });
+    }
+    
+    getDevice(name) {
+        var ret = null;
+        
+        this._devices.forEach((d) => {
+            if (d.name == name) {
+                ret = d;
+            }
+        });
+        return ret;
+    }
+    
+    sensor(i)
+    {
+        var self = this;
+        return new Promise((resolve,reject) => {
+              self._cloud.getSensorInfo(self._sensors[i], function(err, sensor) {
+                if (!!err) {
+                    return reject(err);
+                }
+                var arr = [];
+                sensor.data.forEach((data) => {
+                    var name = sensor.name + "." + data.name;
+                    arr.push([name, data.value]);
+                });
+                return resolve(arr);
+              });
+         });
+    }
+
+    power(device, state)
+    {
+        ///@TODO needs implementation
+        var self = this;
+        return new Promise((resolve,reject) => {
+            //self._cloud.onOffDevice(device, state, function(err, result) {
+            //    if (!!err)
+            //        return reject(err);
+            //    resolve(result);
+                resolve(null);
+            //});
+        });
+   }
+}
+
+//------------------------------------------------------------------------------
 class Telldus
 {
     constructor()
@@ -135,5 +218,5 @@ t.init(function (err) {
 
 //-----------------------------------------------------------------------------
 module.exports = {
-	Telldus: Telldus
+	Telldus: TelldusV2
 };
