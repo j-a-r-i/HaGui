@@ -3,7 +3,7 @@
  * Copyright (C) 2016 Jari Ojanen
  */
 
-var http = require('./myhttp'),
+var myhttp = require('./myhttp'),
     querystring = require('querystring');
 
 const SITE = "dweet.io";
@@ -21,7 +21,7 @@ class Dweet {
                         method: meth
                         };
         
-        return http.requests(options, true);
+        return myhttp.requests(options, true);
     }
     
     send(data) {

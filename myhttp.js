@@ -4,7 +4,8 @@
  */
 
 var http = require('http'),
-    https = require('https');
+    https = require('https'),
+    log = require('./log');
 
 //-----------------------------------------------------------------------------
 /** http get without promise.
@@ -12,16 +13,19 @@ var http = require('http'),
 function get(url, callback)
 {
     return http.get(url, function(res) {
+	var site = url;
         var body = '';
+	log.normal("http get " + site + "...");
         res.on('data', function(d) {
             body += d;
         });
         res.on('end', function() {
-	        callback(null, body);
+	    log.normal("http get " + site + " done.");
+	    callback(null, body);
         });
     })
     .on('error', (e) => {
-        console.log(e.code + ' in ' + url);
+        log.error(e.code + ' in ' + url);
         callback(e.code);
     });
 }
@@ -32,6 +36,9 @@ function get(url, callback)
 function getp(url)
 {
     return new Promise((resolve,reject) => {
+	var site = url;
+
+	log.normal("http getp " + url + "...");
         http.get(url, function(res) {
             var body = '';
             res.on('data', function(d) {
@@ -41,6 +48,7 @@ function getp(url)
                 reject(e);
             });
             res.on('end', function() {
+		log.normal("http getp " + url + " done.");
                 resolve(body);
             });
         });
@@ -53,6 +61,8 @@ function getp(url)
 function requests(options, parseJson)
 {
     return new Promise((resolve,reject) => {
+	var site = options.host;
+	log.normal("request " + site + "...");
         var r = https.request(options, (res) => {
             if (res.statusCode != 200) {
                 console.log('status: ' + res.statusCode);
@@ -64,6 +74,7 @@ function requests(options, parseJson)
                 data += d;
             });
             res.on('end', () => {
+		log.normal("request " + site + " done.");
                 if (parseJson)
                     resolve(JSON.parse(data.toString()));
                 else
