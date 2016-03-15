@@ -174,6 +174,14 @@ app.config(function($routeProvider) {
 	        controller: 'HomeCtrl',
 	        templateUrl: 'partials/home.html'
         })
+        .when('/stock', {
+	        controller: 'StockCtrl',
+	        templateUrl: 'partials/stock.html'
+        })
+        .when('/tv', {
+	        controller: 'TvCtrl',
+	        templateUrl: 'partials/tv.html'
+        })
         .when('/config', {
 	        controller: 'ConfigCtrl',
 	        templateUrl: 'partials/config.html'
@@ -199,6 +207,14 @@ app.controller('HomeCtrl', ['$scope', function ($scope) {
 	{ name:"t2", value:3.1 },
 	{ name:"t3", value:4.1 }
     ];
+}]);
+
+app.controller('StockCtrl', ['$scope', function ($scope) {
+    $scope.values = [];
+}]);
+
+app.controller('TvCtrl', ['$scope', function ($scope) {
+    $scope.values = [];
 }]);
 
 function createDate(hour, min)
