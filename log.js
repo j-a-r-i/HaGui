@@ -1,9 +1,17 @@
 /*
- * Copyright (C) 2015 Jari Ojanen
+ * Copyright (C) 2015-6 Jari Ojanen
  */
 
+/** Store for history objects. History is for action changes.
+ */
 var histories = [];
+
+/** Store for error strings (objects in future).
+ */
 var errors = [];
+
+var RED    = '\u001b[31m';
+var NORMAL = '\u001b[39m';
 
 /** Add string to log (verbose level).
  *
@@ -20,25 +28,35 @@ function verbose(msg)
  */
 function normal(msg)
 {
-	console.log(msg);
+    console.log(msg);
+}
+
+function getHistoryString(item)
+{
+    var dstr = [item.time.getFullYear(),
+                item.time.getMonth() + 1,
+                item.time.getDate()].join(".");
+    var tstr = [item.time.getHours(),
+                item.time.getMinutes(),
+                item.time.getSeconds()].join(":");
+    return JSON.stringify(dstr + " " + tstr + " " + item.action + " " + item.state);
 }
 
 /** Add string to history.
  *
- * @param {Date}   d   Time when event happend
- * @param {string} msg Message to be logged
+ * @param {Object} obj Message to be logged
  */
-function history(d, msg)
+function history(obj)
 {
-	//var d = new Date();
+    //var d = new Date();
     //var s = d.toISOString().slice(5,19) + " " + msg;
-    var s = d.toLocaleString() + " " + msg;
+    //var s = d.toLocaleString() + " " + msg;
     
-	histories.push(s);
-	if (histories.length > 100)
-		histories.shift();
+    histories.push(obj);
+    if (histories.length > 100)
+	histories.shift();
 		
-	console.log(s);
+    console.log(getHistoryString(obj));
 }
 
 /** Add string to log (error level).
@@ -51,7 +69,7 @@ function error(msg)
 	if (errors.length > 100)
 		errors.shift();
 		
-	console.log(msg);
+	console.log(RED + "ERROR " + msg + NORMAL);
 }
 
 function getErrors()
@@ -61,7 +79,9 @@ function getErrors()
 
 function getHistory()
 {
-	return histories;
+    return histories.map((i) => {
+        return getHistoryString(i);
+    });
 }
 
 //-----------------------------------------------------------------------------

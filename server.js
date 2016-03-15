@@ -127,8 +127,8 @@ var myDweet = new dweet.Dweet();
 var gTime = new Date();
 var s = new sche.Scheduler();
 
-log.history(gTime, "HaGUI V" + version);
-log.history(gTime, "time: " + sche.toClock2(gTime));
+log.normal("HaGUI V" + version);
+log.normal("time: " + sche.toClock2(gTime));
 
 emitterMeas.on("measure", (data) => {
     console.log("measure");
@@ -169,30 +169,29 @@ s.add(new sche.IntervalAction(measure.ACTION_WEAT, emitter, 60,
     });
 }));
 
-s.add(new sche.CarHeaterAction(measure.ACTION_CAR1, emitter, function(action, state) {
-    log.history(engine.time(), action.name + " " + state);
-    engine.action(action.name, state);
-}));
+/**
+ *  Handle action.
+ */
+function ActionHandler(action, state)
+{
+    log.history({time:   engine.time(),
+		 action: action.name,
+		 state:  state});
+    engine.action(action.name, state);    
+}
 
-s.add(new sche.CarHeaterAction(measure.ACTION_CAR2, emitter, function(action, state) {
-    log.history(engine.time(), action.name + " " + state);
-    engine.action(action.name, state);
-}));
+/*
+ * Register actions.
+ */
+s.add(new sche.CarHeaterAction(measure.ACTION_CAR1, emitter, ActionHandler));
 
-s.add(new sche.RangeAction(measure.ACTION_LIGHT, emitter, function(action, state) {
-    log.history(engine.time(), action.name + " " + state);
-    engine.action(action.name, state);
-}));
+s.add(new sche.CarHeaterAction(measure.ACTION_CAR2, emitter, ActionHandler));
 
-s.add(new sche.RangeAction(measure.ACTION_LIGHT2, emitter, function(action, state) {
-    log.history(engine.time(), action.name + " " + state);
-    engine.action(action.name, state);
-}));
+s.add(new sche.RangeAction(measure.ACTION_LIGHT, emitter, ActionHandler));
 
-s.add(new sche.RoomHeaterAction(measure.ACTION_ROOM, emitter, function(action, state) {
-    log.history(engine.time(), action.name + " " + state);
-    engine.action(action.name, state);
-}));
+s.add(new sche.RangeAction(measure.ACTION_LIGHT2, emitter, ActionHandler));
+
+s.add(new sche.RoomHeaterAction(measure.ACTION_ROOM, emitter, ActionHandler));
 
 s.load();
 
