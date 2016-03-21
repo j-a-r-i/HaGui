@@ -19,7 +19,7 @@ var WebSocket  = require('ws').Server,
     log        = require('./log.js'),
     dweet      = require('./dweet.js'),
     measure    = require('./measure.js'),
-    engine     = require('./engineReal.js');
+    engine     = require('./engineSim.js');
 
 var 
     gMeasures = [],
@@ -195,13 +195,19 @@ s.add(new sche.RoomHeaterAction(measure.ACTION_ROOM, emitter, ActionHandler));
 
 s.load();
 
-if (engine.isSimulated === false) {
-    //s.genHtml();
-    s.start();
+// generate html template and exit
+//
+if (process.argv.indexOf("-gen") !== -1) {
+    s.genHtml();
+
 }
 else {
-    s.genHtml();
-    emitter.emit("temp", -12.0);
+    if (engine.isSimulated === false) {
+        s.start();
+    }
+    else {
+        emitter.emit("temp", -12.0);
+    }
 }
 
 //------------------------------------------------------------------------------

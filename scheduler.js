@@ -27,12 +27,57 @@ function toStr(clock)
 }
 
 //-----------------------------------------------------------------------------
+class VarBase {
+    constructor(aname, value, canModify) {
+        this._name = aname;
+        this._value = value;
+        this._canModify = canModify;
+    }
+    
+    get name() {
+        return this._name;
+    }
+    
+    get value() {
+        return this._value;
+    }
+    
+    set value(v) {
+        this._value = v;
+    }
+}
+
+//-----------------------------------------------------------------------------
+class VarTime extends VarBase {
+    constructor(aname, value, canModify) {
+        super(aname, value, canModify);
+    }
+    
+    html(group) {
+        return '<input type="time" name="'+this._name+'" ng-model="'+group+'.'+this._name+'" step="300.0">';
+    }
+}
+
+
+//-----------------------------------------------------------------------------
+class VarInteger extends VarBase {
+    constructor(aname, value, canModify) {
+        super(aname, value, canModify);
+    }
+    
+    html(group) {
+        return '<input type="number" name="'+this._name+'" ng-model="'+group+'.'+this._name+'" step="10.0">';
+    }
+}
+
+//-----------------------------------------------------------------------------
 class Action {
-	constructor(aname, exports) {
+	constructor(aname, active) {
 		this._name = aname;
-		this._exports = exports;
+        this._active = active;
+		this._exports = [];
 	}
-	
+	    
 	get name()
 	{
 		return this._name;
@@ -63,8 +108,8 @@ class Action {
 		
 		this._exports.forEach((i) => {
 			//ret.push( (i + ":") + this[i] );
-			ret.push( { name: i,
-						value: this[i]});
+			ret.push( { name: i.name,
+						value: i.value });
 		});		
 		return ret;
 	}
@@ -97,19 +142,21 @@ class Action {
 class RangeAction extends Action {
 	constructor(aname, emitter, func)
 	{
-		super(aname, ['startTime', 'stopTime']);
-		this.startTime = 0;
-		this.stopTime = 0;
-		this._active = false;
+        super(aname, false);
+        
+        this._start = new VarTime('start', 0, true);
+        this._stop  = new VarTime('stop', 0, true);
+        this._exports = [this._start, this._stop];
+        
 		this._callback = func;
 	}
 
 	tick(clock)
 	{
-		if (clock < this.startTime) {
+		if (clock < this._start.value) {
 			// do nothing
 		}
-		else if (clock < this.stopTime) {
+		else if (clock < this._stop.value) {
 			if (!this._active) {
 				this._callback(this, 1);
 				this._active = true;
@@ -128,24 +175,26 @@ class RangeAction extends Action {
 class IntervalAction extends Action {
 	constructor(aname, emitter, ainterval, initialClock, func)
 	{
-		super(aname, ['interval', '_startedTime']);
-		this.interval = ainterval;
+		super(aname, true);
+        
+        this._interval = new VarInteger("interval", ainterval, true);
+        this._started  = new VarTime("started", initialClock, false);
+        this._exports = [this._interval, this._started];
+        
 		this._callback = func;
-		this._startedTime = initialClock; // + this._interval;
 	}
 
 	tick(clock)
 	{
-		if (clock > 800 && this._startedTime < 100)  // handle 24 -> 0 transition
+		if (clock > 800 && this._started.value < 100)  // handle 24 -> 0 transition
 			return;
 	
-		if (clock >= this._startedTime) {
+		if (clock >= this._started.value) {
 			this._callback(this);
-			//console.log("set started time:" + (clock + this.interval))
-			this._startedTime = clock + this.interval;
-			if (this._startedTime > 24*60) {
+			this._started.value = clock + this._interval.value;
+			if (this._started.value > 24*60) {
 				//console.log("too large clock value!");
-				this._startedTime -= 24*60;
+				this._started.value -= 24*60;
 			}		
 		}
 	}
@@ -155,11 +204,12 @@ class IntervalAction extends Action {
 class CarHeaterAction extends Action {
 	constructor(aname, emitter, func)
 	{
-		super(aname, ['leaveTime']);
-		this.leaveTime = 0;
+		super(aname, false);
+		this._leave = new VarTime("leave", 0, false);
+        this._exports = [this._leave];
+        
 		this._callback = func;
 		this._temp = 0;
-		this._active = false;
 			
 		var self = this;
 		emitter.on("temp", (temp) => {
@@ -167,11 +217,6 @@ class CarHeaterAction extends Action {
 		});
 	}
 	
-	set leave(leaveTime)
-	{
-		this.leaveTime = leaveTime;
-	}
-
 	calcStarting()
 	{
 		var sTime = 60;
@@ -197,7 +242,7 @@ class CarHeaterAction extends Action {
 	tick(clock)
 	{
 		if (this._active === true) {
-			if (clock > this.leaveTime) {
+			if (clock > this._leave.value) {
 				this._callback(this, 0);
 				this._active = false;
 			}
@@ -207,10 +252,10 @@ class CarHeaterAction extends Action {
 			
 			if (start === 0)  // no need to heat car
 				return;
-			if (clock > this.leaveTime)
+			if (clock > this._leave.value)
 				return;
 				
-			var sClock = this.leaveTime - start;
+			var sClock = this._leave.value - start;
 			
 			if (clock >= sClock) {
 				this._callback(this, 1);
@@ -224,11 +269,12 @@ class CarHeaterAction extends Action {
 class RoomHeaterAction extends Action {
 	constructor(aname, emitter, func)
 	{
-		super(aname, ['lowTemp', 'highTemp']);
+		super(aname, false);
+		this._low  = new VarTime('low', 0, true);
+		this._high = new VarTime('high', 0, true);;
+        this._exports = [this._low, this._high];
+        
 		this._callback = func;
-		this.lowTemp = 0;
-		this.highTemp = 0;
-		this._active = false;
 		
 		emitter.on("temp", (temp) => {
 			this.setTemp(temp);
@@ -237,11 +283,11 @@ class RoomHeaterAction extends Action {
 	
 	setTemp(value)
 	{
-		if ((this._active === false) && (value < this.lowTemp)) {
+		if ((this._active === false) && (value < this._low.value)) {
 			this._callback(this, 1);
 			this._active = true;
 		}
-		if ((this._active === true) && (value > this.highTemp)) {
+		if ((this._active === true) && (value > this._high.value)) {
 			this._callback(this, 0);
 			this._active = false;				
 		}		
@@ -330,17 +376,26 @@ class Scheduler {
 	
 	genHtml()
 	{
-		var fout = fs.createWriteStream('html/partials/config2.html');
+        var fname = 'html/partials/config2.html'
+		var fout = fs.createWriteStream(fname);
+        fout.on('error', (err) => {
+           console.log("Error in " + fname);
+           console.log(err); 
+        });
+        fout.on('finish', () => {
+           console.log('finnished');
+           process.exit();
+        });
 		this._actions.forEach(function(act) {
 			fout.write('<form ng-submit="submit1(\''+act.name+'\')" ng-controller="ConfigCtrl">\n');
 			fout.write('  <fieldset>\n');
 			fout.write('    <legend><b>'+act.name+'</b></legend>\n');
-			act._exports.forEach((name) => {
-				fout.write('    <label for="'+name+'">'+name+'</label>\n');
-				fout.write('    <input type="time" name="'+name+'" ng-model="'+act.name+'.'+name+'" step="300.0"><br>\n');
+			act._exports.forEach((i) => {
+				fout.write('    <label for="'+i.name+'">'+i.name+'</label>\n');
+				fout.write('    ' + i.html(act.name) + '<br>\n');
 			});
 			fout.write('    <br>\n');
-			fout.write('    <input type="submit" value="Save">\n');
+			fout.write('    <input type="submit" class="btn" value="Save">\n');
 			fout.write('  </fieldset>\n');
 			fout.write('</form>\n');
 		});

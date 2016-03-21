@@ -100,7 +100,7 @@ class Telldus
                                             privateKey : config.privateKey });
                                             
         this._cloud.on('error', function(err) {
-            log.error('telldus error: ' + err.message);
+            log.error('telldus:' + err.message);
         });
     }
     

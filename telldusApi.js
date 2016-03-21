@@ -55,23 +55,23 @@ class TelldusApi
 	
     getDevices(callback) 
     {
-	this._doGet("/devices/list?supportedMethods=" + SUPPORTED_METHODS, callback);
+	    this._doGet("/devices/list?supportedMethods=" + SUPPORTED_METHODS, callback);
     }
 	
     getDeviceInfo(deviceId, callback)
     {
-	this._doGet("/device/info?id="+deviceId, callback);
+	    this._doGet("/device/info?id="+deviceId, callback);
     }
 	
     _doGet(url, callback)
     {
-	var site = url;
+	    var site = url;
 
-	log.normal("oauth get " + site + "...");
-	this.oauth.get(this.site + url,
-		       this.token,
-		       this.secret,
-		       (e,data,res) => {
+	    log.normal("oauth get " + site + "...");
+	    this.oauth.get(this.site + url,
+		               this.token,
+		               this.secret,
+		               (e,data,res) => {
 			   if (e) {
 			       return callback(e, null);
 			   }
@@ -84,7 +84,7 @@ class TelldusApi
 			   }
 			   log.normal("oauth get " + site + " done.");
 			   callback(null, data);
-		       });		
+        });		
     }
 	
     _doPut(url, callback)

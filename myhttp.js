@@ -61,8 +61,8 @@ function getp(url)
 function requests(options, parseJson)
 {
     return new Promise((resolve,reject) => {
-	var site = options.host;
-	log.normal("request " + site + "...");
+	    var site = options.host;
+	    log.normal("request " + site + "...");
         var r = https.request(options, (res) => {
             if (res.statusCode != 200) {
                 console.log('status: ' + res.statusCode);
@@ -74,12 +74,24 @@ function requests(options, parseJson)
                 data += d;
             });
             res.on('end', () => {
-		log.normal("request " + site + " done.");
-                if (parseJson)
-                    resolve(JSON.parse(data.toString()));
+		        log.normal("request " + site + " done.");
+                if (parseJson) {
+                    var obj = {};
+                    try {
+                        obj = JSON.parse(data.toString());
+                    }
+                    catch (err) {
+                        reject(err);
+                    }
+                    resolve(obj);
+                }
                 else
                     resolve(data.toString());
-            });          
+            });
+        });
+        r.on('error', (err) => {
+            log.error(site);
+            reject(err);
         });
         r.end();
     });

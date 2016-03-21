@@ -2,11 +2,11 @@
   <fieldset>
     <legend><b>weather</b></legend>
     <label for="interval">interval</label>
-    <input type="time" name="interval" ng-model="weather.interval" step="300.0"><br>
-    <label for="_startedTime">_startedTime</label>
-    <input type="time" name="_startedTime" ng-model="weather._startedTime" step="300.0"><br>
+    <input type="number" name="interval" ng-model="weather.interval" step="10.0"><br>
+    <label for="started">started</label>
+    <input type="time" name="started" ng-model="weather.started" step="300.0"><br>
     <br>
-    <input type="submit" value="Save">
+    <input type="submit" class="btn" value="Save">
   </fieldset>
 </form>
 <form ng-submit="submit1('car1')" ng-controller="ConfigCtrl">
@@ -15,7 +15,7 @@
     <label for="leaveTime">leaveTime</label>
     <input type="time" name="leaveTime" ng-model="car1.leaveTime" step="300.0"><br>
     <br>
-    <input type="submit" value="Save">
+    <input type="submit" class="btn" value="Save">
   </fieldset>
 </form>
 <form ng-submit="submit1('car2')" ng-controller="ConfigCtrl">
@@ -24,39 +24,39 @@
     <label for="leaveTime">leaveTime</label>
     <input type="time" name="leaveTime" ng-model="car2.leaveTime" step="300.0"><br>
     <br>
-    <input type="submit" value="Save">
+    <input type="submit" class="btn" value="Save">
   </fieldset>
 </form>
 <form ng-submit="submit1('light')" ng-controller="ConfigCtrl">
   <fieldset>
     <legend><b>light</b></legend>
-    <label for="startTime">startTime</label>
-    <input type="time" name="startTime" ng-model="light.startTime" step="300.0"><br>
-    <label for="stopTime">stopTime</label>
-    <input type="time" name="stopTime" ng-model="light.stopTime" step="300.0"><br>
+    <label for="start">start</label>
+    <input type="time" name="start" ng-model="light.start" step="300.0"><br>
+    <label for="stop">stop</label>
+    <input type="time" name="stop" ng-model="light.stop" step="300.0"><br>
     <br>
-    <input type="submit" value="Save">
+    <input type="submit" class="btn" value="Save">
   </fieldset>
 </form>
 <form ng-submit="submit1('light2')" ng-controller="ConfigCtrl">
   <fieldset>
     <legend><b>light2</b></legend>
-    <label for="startTime">startTime</label>
-    <input type="time" name="startTime" ng-model="light2.startTime" step="300.0"><br>
-    <label for="stopTime">stopTime</label>
-    <input type="time" name="stopTime" ng-model="light2.stopTime" step="300.0"><br>
+    <label for="start">start</label>
+    <input type="time" name="start" ng-model="light2.start" step="300.0"><br>
+    <label for="stop">stop</label>
+    <input type="time" name="stop" ng-model="light2.stop" step="300.0"><br>
     <br>
-    <input type="submit" value="Save">
+    <input type="submit" class="btn" value="Save">
   </fieldset>
 </form>
 <form ng-submit="submit1('room')" ng-controller="ConfigCtrl">
   <fieldset>
     <legend><b>room</b></legend>
-    <label for="lowTemp">lowTemp</label>
-    <input type="time" name="lowTemp" ng-model="room.lowTemp" step="300.0"><br>
-    <label for="highTemp">highTemp</label>
-    <input type="time" name="highTemp" ng-model="room.highTemp" step="300.0"><br>
+    <label for="low">low</label>
+    <input type="time" name="low" ng-model="room.low" step="300.0"><br>
+    <label for="high">high</label>
+    <input type="time" name="high" ng-model="room.high" step="300.0"><br>
     <br>
-    <input type="submit" value="Save">
+    <input type="submit" class="btn" value="Save">
   </fieldset>
 </form>

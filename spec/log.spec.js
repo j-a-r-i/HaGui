@@ -8,11 +8,11 @@ var d = new Date();
 
 describe("log history", () => {
     it("should remember one item", () => {		
-	log.history(d, "one");
+	    log.history(d, "one");
 
-	var h = log.getHistory();
+	    var h = log.getHistory();
 
-	expect(h.length).toBe(1);
+	    expect(h.length).toBe(1);
     });
 });
 

@@ -1,7 +1,7 @@
 //var cmd = require('./commands.js');
 
-var wsUri = "ws://192.168.100.40:8080/";
-//var wsUri = "ws://localhost:8080/";
+//var wsUri = "ws://192.168.100.40:8080/";
+var wsUri = "ws://localhost:8080/";
 //var output;
 var stat = null;
 var callbacks = {};
@@ -17,7 +17,7 @@ const CMD_SCHEDULERS = "sche";
 const CMD_PING = "ping";
 
 
-google.load("visualization", "1", {packages:["corechart","table"]});
+google.charts.load("current", {packages:["corechart","table"]});
 
 //------------------------------------------------------------------------------
 function init()
@@ -96,9 +96,12 @@ function drawLine(ctrl, name, arr)
     var data = google.visualization.arrayToDataTable(arr);
     var options = { title: name,
                     curveType: 'none',
-                    hAxis: { format: 'HH:mm' },
-		    chartArea: {width: '85%',
-				height: '75%'},
+                    hAxis: { format: 'HH:mm',
+                             textStyle: {color: 'lightgrey'}},
+                    vAxis: { textStyle: {color: 'lightgrey'}},
+                    backgroundColor: '#3F3F3F',
+		            chartArea: {width: '85%',
+				                height: '75%'},
                     legend: { position: 'bottom' }
                   };
 
