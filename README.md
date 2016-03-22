@@ -19,6 +19,6 @@ The program utilize latest ES6 features (classes and promises).
 
 Uses following frameworks:
 
- - [AngularJS]: https://angularjs.org/
- - [Google charts]: https://developers.google.com/chart/interactive/docs/
- - [Q promises]: https://github.com/kriskowal/q
+ - [AngularJS](https://angularjs.org/)
+ - [Google charts](https://developers.google.com/chart/interactive/docs/)
+ - [Q promises](https://github.com/kriskowal/q)
