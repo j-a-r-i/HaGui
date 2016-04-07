@@ -31,17 +31,27 @@ class MeasureData {
     }
 
     set(name, value) {
-	var found = false;
-        this.items.forEach( (x) => {
-            if (x.name == name) {
-                x.value = oneDecimal(parseFloat(value));
-		found = true;
-            }
-        });
-	if (found == false) {
-	    log.error("invalid measurement id: "+name);
-	}
+        var found = false;
+            this.items.forEach( (x) => {
+                if (x.name == name) {
+                    x.value = oneDecimal(parseFloat(value));
+            found = true;
+                }
+            });
+        if (found == false) {
+            log.error("invalid measurement id: "+name);
+        }
     }                     
+
+    getJson() {
+        var ret = {};
+        ret['tm'] = this.tm;
+        this.items.forEach((x) => {
+            ret[x.name] = x.value; 
+        });
+        
+        return ret;
+    }
 
     header() {
         var resp = ['time'];

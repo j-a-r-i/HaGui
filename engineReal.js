@@ -18,10 +18,10 @@ function timer1()
     console.log("timer1");
     
     Promise.all([tcloud.sensor(0), tcloud.sensor(1)]).then((values) => {
-        item.time = new Date();              
+        item.tm = new Date();              
         values.forEach((i) => {
-            i.forEach((i2) => {
-                item.set(i2[0], i2[1]);             
+            i.forEach((k) => {
+                item.set(k[0], k[1]);             
             });
         });
         

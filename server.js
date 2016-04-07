@@ -19,7 +19,7 @@ var WebSocket  = require('ws').Server,
     log        = require('./log.js'),
     dweet      = require('./dweet.js'),
     measure    = require('./measure.js'),
-    engine     = require('./engineSim.js');
+    engine     = require('./engineReal.js');
 
 var 
     gMeasures = [],
@@ -131,12 +131,18 @@ log.normal("HaGUI V" + version);
 log.normal("time: " + sche.toClock2(gTime));
 
 emitterMeas.on("measure", (data) => {
-    console.log("measure");
+    log.verbose("measure");
     
     gMeasures.push(data.values());
     
-    if (!engine.isSimulated)
-        myDweet.send(data);
+    if (!engine.isSimulated) {
+        var obj = data.getJson();
+        myDweet.send(obj);
+    }
+    else {
+        //var obj = data.getJson();
+        //console.log(obj);        
+    }
             
     //if (simulated === false)
     emitter.emit("temp", data.temp2);
