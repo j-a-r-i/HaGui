@@ -33,6 +33,10 @@ class VarBase {
         this._value = value;
         this._canModify = canModify;
     }
+
+    setVal(obj) {
+	    this.value = obj;
+    }
     
     get name() {
         return this._name;
@@ -51,6 +55,11 @@ class VarBase {
 class VarTime extends VarBase {
     constructor(aname, value, canModify) {
         super(aname, value, canModify);
+    }
+
+    setVal(obj) {
+        var time = clock(obj[0], obj[1]);	
+        this.value = time;
     }
     
     html(group) {
@@ -83,7 +92,7 @@ class Action {
 		return this._name;
 	}
 	
-    setVal(name, val)
+        setVal(name, val)
 	{
 		console.log(this._name + "." + name + " = " + val);
 		this[name] = val;
@@ -91,15 +100,13 @@ class Action {
 	
 	load(obj)
 	{
-		Object.keys(obj).forEach((key) => {
-			if (key.indexOf("Time") > 0) {
-				var time = clock(obj[key][0], obj[key][1]);
-				this.setVal(key, time);
-			}
-			else {
-				this.setVal(key, obj[key]);
-			}
-		});
+	    Object.keys(obj).forEach((key) => {
+            this._exports.forEach((i) => {
+                if (i.name === key) {
+                    i.setVal(obj[key]);
+                };
+            });
+        });
 	}
 
 	strings()
