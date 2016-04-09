@@ -4,6 +4,7 @@
  */
 var xml2js = require('xml2js'),
     myhttp   = require('./myhttp'),
+    log = require('./log'),
     parser = new xml2js.Parser();
 
 const stocks = [
@@ -30,6 +31,45 @@ class Nasdaq {
     }
 
     history() {
+        var self = this;
+        return new Promise((resolve,reject) => {
+            var items = stocks.map((code) => {
+                var opt = { host: SITE,
+                            path: '/webproxy/DataFeedProxy.aspx?Subsystem=History&Action=GetDataSeries&Instrument=' + code + '&FromDate=2016-02-01',
+                            port: 443,
+                            method: 'GET'
+                          };
+                return myhttp.requests(opt, false);
+            });
+
+            Promise.all(items)
+            .catch((error) => {
+                log.error(error);
+            })
+            .then((values) => {
+                self.result = {};
+                values.map((obj) => {
+                    parser.parseString(obj, (err, result) => {
+                        if (!!err) {
+                            log.error(err.message);
+                        }
+                        result.response.hi.forEach((i) => {
+                            var key = i.$.dt;
+                            var val = parseFloat(i.$.cp);
+                            
+                            if (key in self.result) {
+                                self.result[key].push(val);
+                            }
+                            else {
+                                self.result[key] = [key, val];
+                            }
+                        });
+                    });     
+                });
+                var values = Object.keys(self.result).map(key => self.result[key]);
+                resolve(values);
+            });
+        });
     }
     
     download() {
@@ -42,27 +82,26 @@ class Nasdaq {
                             method: 'GET'
                           };
                 return myhttp.requests(opt, false);
-                //return myhttp.getp('http:/' + SITE + '/webproxy/DataFeedProxy.aspx?Subsystem=Prices&Action=GetInstrument&Instrument=' + code);
             });
 
             Promise.all(items)
             .catch((error) => {
-                console.log(error);
+                log.error(error);
             })
             .then((values) => {
                 self.result = {};
                 values.map((obj) => {
                     parser.parseString(obj, (err, result) => {
                         if (!!err) {
-                            console.log(err.message);
+                            log.error(err.message);
                         }
                         var inst = result.response.inst[0].$;
-			var name = inst.fnm;
-			
-			if (name.indexOf(' ') > 0) {
-			    name = name.substring(0, name.indexOf(' '));
-			}
-			self.result[name] = parseFloat(inst.bp);
+                        var name = inst.fnm;
+                        
+                        if (name.indexOf(' ') > 0) {
+                            name = name.substring(0, name.indexOf(' '));
+                        }
+                        self.result[name] = parseFloat(inst.bp);
                     });     
                 });
                 resolve(self.result);
@@ -74,12 +113,12 @@ class Nasdaq {
 //SITE + /webproxy/DataFeedProxy.aspx?Subsystem=History&Action=GetDataSeries&Instrument=HEX24271&FromDate=2015-10-01
 //SITE + /webproxy/DataFeedProxy.aspx?Subsystem=Prices&Action=GetInstrument&Instrument=HEX24271
 
-var n = new Nasdaq();
+/*var n = new Nasdaq();
 
-n.download().then((result) => {
+n.history().then((result) => {
     console.log(result);
 });
-
+*/
 
 //-----------------------------------------------------------------------------
 module.exports = {
