@@ -88,5 +88,6 @@ module.exports = {
     ACTION_LIGHT : "light",
     ACTION_LIGHT2 : "light2",
     ACTION_ROOM : "room",
-    ACTION_WEAT : "weather"
+    ACTION_WEAT : "weather",
+    ACTION_CLOCK1: "clock1"
 };

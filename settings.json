@@ -19,5 +19,8 @@
 	},
 	"weather" : {
 		"interval": 60
-	}
+	},
+    "clock1" : {
+        "time": [18, 0]
+    }
 }

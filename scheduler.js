@@ -33,10 +33,6 @@ class VarBase {
         this._value = value;
         this._canModify = canModify;
     }
-
-    setVal(obj) {
-	    this.value = obj;
-    }
     
     get name() {
         return this._name;
@@ -72,6 +68,10 @@ class VarTime extends VarBase {
 class VarInteger extends VarBase {
     constructor(aname, value, canModify) {
         super(aname, value, canModify);
+    }
+
+    setVal(obj) {
+	    this.value = obj;
     }
     
     html(group) {
@@ -208,6 +208,32 @@ class IntervalAction extends Action {
 }
 
 //-----------------------------------------------------------------------------
+/** action that is performed at a specific time of day. (e.g. 18:00)
+ */
+class ClockAction extends Action {
+	constructor(aname, emitter, atime, func)
+	{
+		super(aname, true);
+        
+        this._time = new VarTime("time", atime, true);
+        this._lastTime = 0;
+        this._exports = [this._time];
+        
+		this._callback = func;
+	}
+
+	tick(clock)
+	{
+		if ((clock == this._time.value) ||
+           ((this._lastTime < this._time.value) && (this._time.value < clock))) 
+        {
+			this._callback(this);
+		}
+        this._lastTime = clock;
+	}
+}
+
+//-----------------------------------------------------------------------------
 class CarHeaterAction extends Action {
 	constructor(aname, emitter, func)
 	{
@@ -277,9 +303,9 @@ class RoomHeaterAction extends Action {
 	constructor(aname, emitter, func)
 	{
 		super(aname, false);
-		this._low  = new VarTime('low', 0, true);
-		this._high = new VarTime('high', 0, true);;
-        this._exports = [this._low, this._high];
+		this._low  = new VarInteger('low', 0, true);
+	        this._high = new VarInteger('high', 0, true);;
+                this._exports = [this._low, this._high];
         
 		this._callback = func;
 		
@@ -412,12 +438,13 @@ class Scheduler {
 
 //-----------------------------------------------------------------------------
 module.exports = {
-	toClock: clock,
-	toClock2: clock2,
-	toStr: toStr,
-	RangeAction: RangeAction,
-	IntervalAction: IntervalAction,
-	CarHeaterAction: CarHeaterAction,
-	RoomHeaterAction: RoomHeaterAction,
-	Scheduler: Scheduler
+    toClock: clock,
+    toClock2: clock2,
+    toStr: toStr,
+    RangeAction: RangeAction,
+    IntervalAction: IntervalAction,
+    ClockAction: ClockAction,
+    CarHeaterAction: CarHeaterAction,
+    RoomHeaterAction: RoomHeaterAction,
+    Scheduler: Scheduler
 };

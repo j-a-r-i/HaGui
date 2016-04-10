@@ -31,6 +31,8 @@ var
     emitterMeas = new events.EventEmitter();
 
 const CMD_MEASURES = "meas";
+const CMD_STOCK    = "stoc";
+const CMD_TV       = "tvtv";
 const CMD_LATEST   = "last";
 const CMD_WEATHER  = "weat";
 const CMD_STATUS   = "stat";
@@ -57,6 +59,14 @@ function onWsMessage(message)
         m = null;
        
         resp.data = arr;
+        break;
+
+    case CMD_STOCK:
+        resp.data = [];
+        break;
+        
+    case CMD_TV:
+        resp.data = [];
         break;
 
     case CMD_LATEST:
@@ -163,7 +173,7 @@ engine.start();
 //
 s.add(new sche.IntervalAction(measure.ACTION_WEAT, emitter, 60,
                               sche.toClock2(gTime), 
-                              function() {
+                              () => {
     log.verbose("reading weather data");
     fmi.fmiRead(engine.isSimulated, function(err,arr) {
         if (err) {
@@ -173,6 +183,13 @@ s.add(new sche.IntervalAction(measure.ACTION_WEAT, emitter, 60,
             gWeather = arr;
         }
     });
+}));
+
+s.add(new sche.ClockAction(measure.ACTION_CLOCK1,
+			               emitter,
+			               sche.toClock(18,0),
+			               () => {
+    log.normal("reading nasdaq data");
 }));
 
 /**
