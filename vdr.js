@@ -2,6 +2,10 @@ var net = require('net'),
     rl  = require('readline'),
     config = require('./config.json'),
 
+// see https://www.linuxtv.org/vdrwiki/index.php/SVDRP
+    
+
+    
 var PORT = 6419,
     HOST = config.vdrServer;
     
