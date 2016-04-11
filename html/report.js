@@ -8,11 +8,13 @@ var callbacks = {};
 var websocket = null;
 
 const CMD_MEASURES = "meas";
+const CMD_STOCK    = "stoc";
+const CMD_TV       = "tv";
 const CMD_LATEST   = "last";
 const CMD_WEATHER  = "weat";
-const CMD_STATUS = "stat";
-const CMD_SETVAL = "sval";
-const CMD_GETVAL = "gval";
+const CMD_STATUS   = "stat";
+const CMD_SETVAL   = "sval";
+const CMD_GETVAL   = "gval";
 const CMD_SCHEDULERS = "sche";
 const CMD_PING = "ping";
 
@@ -70,6 +72,27 @@ function updateCharts()
 }
 
 //------------------------------------------------------------------------------
+function updateStock()
+{
+    send(CMD_STOCK, {})
+        .then(function (msg) {
+            var arr = [];
+            
+            msg.data.forEach(function(i) {
+                arr.push([new Date(i[0]), i[1], i[3], i[5], i[6], i[7], i[8] ]);
+            });
+            drawLine("stock1", "Group1", arr);
+
+            var arr2 = [];
+            msg.data.forEach(function(i) {
+                arr2.push([new Date(i[0]), i[2], i[4], i[9]]);
+            });
+            drawLine("stock2", "Group2", arr2);
+            
+        });
+}
+
+//------------------------------------------------------------------------------
 function onOpen(evt)
 {
     updateCharts();
@@ -97,8 +120,11 @@ function drawLine(ctrl, name, arr)
     var options = { title: name,
                     curveType: 'none',
                     hAxis: { format: 'HH:mm',
-                             textStyle: {color: 'lightgrey'}},
-                    vAxis: { textStyle: {color: 'lightgrey'}},
+                             textStyle: {color: 'khaki'}},
+                    vAxis: { textStyle: {color: 'khaki'}},
+                    //colors: ['lightblue', 'lightred', 'lightgreen'],
+                    titleTextStyle: { color: 'khaki'},
+                    legendTextStyle: { color: 'khaki' },
                     backgroundColor: '#3F3F3F',
 		            chartArea: {width: '85%',
 				                height: '75%'},
@@ -210,10 +236,12 @@ app.controller('HomeCtrl', ['$scope', function ($scope) {
 	{ name:"t2", value:3.1 },
 	{ name:"t3", value:4.1 }
     ];
+  updateCharts();
 }]);
 
 app.controller('StockCtrl', ['$scope', function ($scope) {
     $scope.values = [];
+    updateStock();
 }]);
 
 app.controller('TvCtrl', ['$scope', function ($scope) {

@@ -18,11 +18,13 @@ var WebSocket  = require('ws').Server,
     info       = require('./info.js'),
     log        = require('./log.js'),
     dweet      = require('./dweet.js'),
+    nasdaq     = require("./nasdaq.js"),
     measure    = require('./measure.js'),
     engine     = require('./engineReal.js');
 
 var 
     gMeasures = [],
+    gNasdaq = [],
     gWeather = [],
     gLights = null,
     gCar1 = null,
@@ -62,7 +64,7 @@ function onWsMessage(message)
         break;
 
     case CMD_STOCK:
-        resp.data = [];
+        resp.data = gNasdaq;
         break;
         
     case CMD_TV:
@@ -134,6 +136,7 @@ function onWsMessage(message)
 
 //--------------------------------------------------------------------------------
 var myDweet = new dweet.Dweet();
+var myNasdaq = new nasdaq.Nasdaq();
 var gTime = new Date();
 var s = new sche.Scheduler();
 
@@ -168,6 +171,14 @@ emitterMeas.on("tick", (time) => {  // for simulated engine
 engine.init(emitterMeas);
 engine.start();
 
+// Read initial data
+//
+myNasdaq.history()
+.then((result) => {
+    //console.log(result);
+    gNasdaq = result;
+});
+
 //--------------------------------------------------------------------------------
 // Configure scheduler actions
 //
@@ -190,6 +201,12 @@ s.add(new sche.ClockAction(measure.ACTION_CLOCK1,
 			               sche.toClock(18,0),
 			               () => {
     log.normal("reading nasdaq data");
+    myNasdaq.history()
+    .then((result) => {
+        console.log(result);
+        gNasdaq = result;
+    });
+
 }));
 
 /**

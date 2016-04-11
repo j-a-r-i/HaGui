@@ -35,7 +35,7 @@ class Nasdaq {
         return new Promise((resolve,reject) => {
             var items = stocks.map((code) => {
                 var opt = { host: SITE,
-                            path: '/webproxy/DataFeedProxy.aspx?Subsystem=History&Action=GetDataSeries&Instrument=' + code + '&FromDate=2016-02-01',
+                            path: '/webproxy/DataFeedProxy.aspx?Subsystem=History&Action=GetDataSeries&Instrument=' + code + '&FromDate=2016-03-01',
                             port: 443,
                             method: 'GET'
                           };
@@ -66,7 +66,9 @@ class Nasdaq {
                         });
                     });     
                 });
+                var header = ['Date'].concat(stocks);
                 var values = Object.keys(self.result).map(key => self.result[key]);
+                values.unshift(header);
                 resolve(values);
             });
         });
@@ -117,8 +119,8 @@ class Nasdaq {
 
 n.history().then((result) => {
     console.log(result);
-});
-*/
+});*/
+
 
 //-----------------------------------------------------------------------------
 module.exports = {
