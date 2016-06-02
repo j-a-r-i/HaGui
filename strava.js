@@ -30,7 +30,7 @@ class Strava {
             .then((value) => {
                 self.result = [];
                 value.forEach((act) => {
-                   self.result.push([act.start_date_local, act.type, Math.floor(act.moving_time/60), act.distance]);
+                   self.result.push([act.start_date_local, act.type, Math.floor(act.moving_time/60), Math.floor(act.elapsed_time/60), act.distance]);
                 });
                 resolve(self.result);
             })
@@ -40,6 +40,16 @@ class Strava {
         });
     }
 }
+
+var s = new Strava();
+
+s.download()
+.then((res) => {
+    console.log(res);
+})
+.catch((err) => {
+    console.log("ERROR:" + err);
+});
 
 //-----------------------------------------------------------------------------
 module.exports = {
