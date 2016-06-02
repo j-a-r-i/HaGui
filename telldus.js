@@ -3,8 +3,7 @@
  * Copyright (C) 2015 Jari Ojanen
  */
 
-var TAPI   = require('telldus-live'),
-    TAPI2  = require('./telldusApi'),
+var TAPI2  = require('./telldusApi'),
     config = require('./config.json'),
     log    = require('./log.js');
 
@@ -90,7 +89,7 @@ class TelldusV2
 }
 
 //------------------------------------------------------------------------------
-class Telldus
+/*class Telldus
 {
     constructor()
     {
@@ -175,6 +174,7 @@ class Telldus
          });
     }
 }
+*/
 
 /*cloud.getDevices(function(err, devices) {
     var i;
