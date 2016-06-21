@@ -34,40 +34,18 @@ function init()
 }
 
 //------------------------------------------------------------------------------
-function updateWeather()
-{
-    send(CMD_WEATHER, {})
-    .then(function(msg) {
-        var arr = [];
-        msg.data.forEach(function(i) {
-            arr.push([new Date(i[0]), i[1], i[2], i[3]]);
-        });
-        drawLine("chart4", "Forecast", arr);
-    });
-}
-
-//------------------------------------------------------------------------------
 function updateCharts()
 {
     send(CMD_MEASURES, {})
         .then(function (msg) {
-            var arr = [];
-            
-            msg.data.forEach(function(i) {
-                arr.push([new Date(i[0]), i[1], i[2]]);
-            });
-            drawLine("chart1", "Temperature", arr);
-
-            var arr2 = []; //[["time", "h1"]];
-            msg.data.forEach(function(i) {
-                arr2.push([new Date(i[0]), i[4]]);
-            });
-            drawLine("chart2", "Humidity", arr2);
-            
-            return send(CMD_LATEST, {});
+            drawTemperature(msg.data);
+            return send(CMD_WEATHER, {});
         })
         .then(function (msg) {
-            drawTable("chart3", "None", msg.data, true);
+            drawWeather(msg.data);
+        })
+        .fail(function (err) {
+            alert(err);
         })
 }
 
@@ -89,13 +67,16 @@ function updateStock()
             });
             drawLine("stock2", "Group2", arr2);
             
+        })
+        .fail(function (err) {
+            alert(err);
         });
 }
 
 //------------------------------------------------------------------------------
 function onOpen(evt)
 {
-    updateCharts();
+    //updateCharts();
 }
 
 //------------------------------------------------------------------------------
@@ -138,13 +119,36 @@ function drawLine(ctrl, name, arr)
     chart.draw(data, options);
 }
 
-function drawTable(ctrl, name, msg)
+function drawTemperature(msg)
 {
+    var arr = [];
+    
+    msg.forEach(function(i) {
+        arr.push([new Date(i[0]), i[1], i[2]]);
+    });
+    drawLine("chart1", "Temperature", arr);
+
+    var arr2 = []; //[["time", "h1"]];
+    msg.forEach(function(i) {
+        arr2.push([new Date(i[0]), i[4]]);
+    });
+    drawLine("chart2", "Humidity", arr2);    
+}
+
+function drawWeather(msg)
+{
+    var arr = [];
+    msg.forEach(function(i) {
+        arr.push([new Date(i[0]), i[1], i[2], i[3]]);
+    });
+    drawLine("chart4", "Forecast", arr);
+    
+/*    var ctrl = "chart4";
     var data = google.visualization.arrayToDataTable(msg);
     var options = { showRowNumber: true,
 		            legend: 'none'};
     var table = new google.visualization.Table(document.getElementById(ctrl));
-    table.draw(data, options);
+    table.draw(data, options);*/
 }
 
 function onMessage(evt)
@@ -231,12 +235,28 @@ app.controller('HomeCtrl', ['$scope', function ($scope) {
   $scope.commands = [CMD_MEASURES,
                      CMD_LATEST];
     
-    $scope.values = [
-	{ name:"t1", value:2.1 },
-	{ name:"t2", value:3.1 },
-	{ name:"t3", value:4.1 }
-    ];
-  updateCharts();
+  
+  send(CMD_LATEST, {})
+  .then(function(msg) {
+    $scope.temp1 = msg.values.t1;
+    $scope.temp2 = msg.values.t2;
+    $scope.temp3 = msg.values.t3;
+
+    $scope.$apply();
+    
+    return send(CMD_MEASURES, {});
+  })
+  .then(function(msg) {
+    drawTemperature(msg.data);
+    
+    return send(CMD_WEATHER, {});  
+  })
+  .then(function(msg) {
+    drawWeather(msg.data);  
+  })
+  .fail(function(err) {
+      alert(err);
+  });
 }]);
 
 app.controller('StockCtrl', ['$scope', function ($scope) {

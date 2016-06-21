@@ -7,25 +7,20 @@
                  onclick = "updateCharts()">
           Charts
         </button>
-         <button type = "button"
-                 class="btn" 
-                 onclick = "updateWeather()">
-          Weather
-        </button>
       </fieldset>
     </form>
+    <br/>
+    <aside>
+      <table border="1">
+        <tr><td>T1</td><td>{{temp1}}</td></tr>
+        <tr><td>T2</td><td>{{temp2}}</td></tr>
+        <tr><td>T3</td><td>{{temp3}}</td></tr>
+      </table>
+    </aside>
     </div>
   </div>
 <br/>
 <div class="container">
-   <aside>
-     <table border="0">
-       <tr ng-repeat="x in values">
-	 <td bgcolor="lightgrey">{{x.name}}</td>
-	 <td><b>{{x.value}}</b></td>
-       </tr>
-     </table>
-   </aside>
    <div class="chartbox">
      <div id="chart1" style="width: 580px; height: 300px;"></div>
    </div>
