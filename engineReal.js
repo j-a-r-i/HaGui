@@ -69,6 +69,10 @@ function start()
 //--------------------------------------------------------------------------------
 function action(name, state)
 {
+    log.history({time:   time(),
+		 action: name,
+		 state:  state});
+
     switch (name) {
     case measure.ACTION_CAR1:
         if (gCar1) 

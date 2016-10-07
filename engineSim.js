@@ -101,24 +101,9 @@ function start()
 //--------------------------------------------------------------------------------
 function action(name, state)
 {
-    var stateNames = ['off', 'on'];
-
-    log.normal(name + ' ' + stateNames[state]);
-    
-    switch (name) {
-    case measure.ACTION_CAR1:
-        break;
-    case measure.ACTION_CAR2:
-        break;
-    case measure.ACTION_LIGHT:
-        break;
-    case measure.ACTION_LIGHT2:
-        break;
-    case measure.ACTION_ROOM:
-        break;
-    case measure.ACTION_WEAT:
-        break; 
-    }
+    log.history({time:   time(),
+		 action: name,
+		 state:  state});
 }
 
 //--------------------------------------------------------------------------------

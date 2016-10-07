@@ -165,13 +165,13 @@ class RangeAction extends Action {
 		}
 		else if (clock < this._stop.value) {
 			if (!this._active) {
-				this._callback(this, 1);
+				this._callback(this.name, 1);
 				this._active = true;
 			}	
 		}
 		else {
 			if (this._active) {
-				this._callback(this, 0);
+				this._callback(this.name, 0);
 				this._active = false;
 			}
 		}
@@ -197,7 +197,7 @@ class IntervalAction extends Action {
 			return;
 	
 		if (clock >= this._started.value) {
-			this._callback(this);
+			this._callback();
 			this._started.value = clock + this._interval.value;
 			if (this._started.value > 24*60) {
 				//console.log("too large clock value!");
@@ -227,7 +227,7 @@ class ClockAction extends Action {
 		if ((clock == this._time.value) ||
            ((this._lastTime < this._time.value) && (this._time.value < clock))) 
         {
-			this._callback(this);
+			this._callback();
 		}
         this._lastTime = clock;
 	}
@@ -276,7 +276,7 @@ class CarHeaterAction extends Action {
 	{
 		if (this._active === true) {
 			if (clock > this._leave.value) {
-				this._callback(this, 0);
+				this._callback(this.name, 0);
 				this._active = false;
 			}
 		}
@@ -291,7 +291,7 @@ class CarHeaterAction extends Action {
 			var sClock = this._leave.value - start;
 			
 			if (clock >= sClock) {
-				this._callback(this, 1);
+				this._callback(this.name, 1);
 				this._active = true;			
 			}			
 		}
@@ -317,11 +317,11 @@ class RoomHeaterAction extends Action {
 	setTemp(value)
 	{
 		if ((this._active === false) && (value < this._low.value)) {
-			this._callback(this, 1);
+			this._callback(this.name, 1);
 			this._active = true;
 		}
 		if ((this._active === true) && (value > this._high.value)) {
-			this._callback(this, 0);
+			this._callback(this.name, 0);
 			this._active = false;				
 		}		
 	}

@@ -2,7 +2,7 @@
 /*
  * Copyright (C) 2015-6 Jari Ojanen
  */
-var version = "0.3.0";
+var version = "0.3.1";
 
 const SERVER_PORT=8090;
 const WS_PORT=8080;
@@ -20,7 +20,7 @@ var WebSocket  = require('ws').Server,
     dweet      = require('./dweet.js'),
     nasdaq     = require("./nasdaq.js"),
     measure    = require('./measure.js'),
-    engine     = require('./engineReal.js');
+    engine     = require('./engineSim.js');
 
 var 
     gMeasures = [],
@@ -41,7 +41,7 @@ const CMD_STATUS   = "stat";
 const CMD_SETVAL   = "sval";
 const CMD_GETVAL   = "gval";
 const CMD_SCHEDULERS = "sche";
-const CMD_PING = "ping";
+const CMD_PING     = "ping";
 
 //--------------------------------------------------------------------------------
 function onWsMessage(message)
@@ -72,21 +72,21 @@ function onWsMessage(message)
         break;
 
     case CMD_LATEST:
-	if (gMeasures.length === 0) {
-	    resp.values = [];
-	}
-	else {
-            var item = gMeasures[gMeasures.length - 1];
-            var m = new measure.MeasureData();
-            var headers = m.header();
-            var obj = {}
-	    
-            for (var i in headers) {
-		obj[headers[i]] = item[i];
-            };
+        if (gMeasures.length === 0) {
+            resp.values = [];
+        }
+        else {
+                var item = gMeasures[gMeasures.length - 1];
+                var m = new measure.MeasureData();
+                var headers = m.header();
+                var obj = {}
+            
+                for (var i in headers) {
+            obj[headers[i]] = item[i];
+                };
 
-            resp.values = obj;
-	}
+                resp.values = obj;
+        }
         break;
 
     case CMD_WEATHER:
@@ -173,16 +173,16 @@ engine.start();
 
 // Read initial data
 //
-myNasdaq.history()
+/*myNasdaq.history()
 .then((result) => {
     //console.log(result);
     gNasdaq = result;
-});
+});*/
 
 //--------------------------------------------------------------------------------
 // Configure scheduler actions
 //
-s.add(new sche.IntervalAction(measure.ACTION_WEAT, emitter, 60,
+/*s.add(new sche.IntervalAction(measure.ACTION_WEAT, emitter, 60,
                               sche.toClock2(gTime), 
                               () => {
     log.verbose("reading weather data");
@@ -195,8 +195,9 @@ s.add(new sche.IntervalAction(measure.ACTION_WEAT, emitter, 60,
         }
     });
 }));
+*/
 
-s.add(new sche.ClockAction(measure.ACTION_CLOCK1,
+/*s.add(new sche.ClockAction(measure.ACTION_CLOCK1,
 			               emitter,
 			               sche.toClock(18,0),
 			               () => {
@@ -207,31 +208,20 @@ s.add(new sche.ClockAction(measure.ACTION_CLOCK1,
         gNasdaq = result;
     });
 
-}));
-
-/**
- *  Handle action.
- */
-function ActionHandler(action, state)
-{
-    log.history({time:   engine.time(),
-		 action: action.name,
-		 state:  state});
-    engine.action(action.name, state);    
-}
+}));*/
 
 /*
  * Register actions.
  */
-s.add(new sche.CarHeaterAction(measure.ACTION_CAR1, emitter, ActionHandler));
+s.add(new sche.CarHeaterAction(measure.ACTION_CAR1, emitter, engine.action));
 
-s.add(new sche.CarHeaterAction(measure.ACTION_CAR2, emitter, ActionHandler));
+s.add(new sche.CarHeaterAction(measure.ACTION_CAR2, emitter, engine.action));
 
-s.add(new sche.RangeAction(measure.ACTION_LIGHT, emitter, ActionHandler));
+s.add(new sche.RangeAction(measure.ACTION_LIGHT, emitter, engine.action));
 
-s.add(new sche.RangeAction(measure.ACTION_LIGHT2, emitter, ActionHandler));
+s.add(new sche.RangeAction(measure.ACTION_LIGHT2, emitter, engine.action));
 
-s.add(new sche.RoomHeaterAction(measure.ACTION_ROOM, emitter, ActionHandler));
+s.add(new sche.RoomHeaterAction(measure.ACTION_ROOM, emitter, engine.action));
 
 s.load();
 
@@ -239,7 +229,6 @@ s.load();
 //
 if (process.argv.indexOf("-gen") !== -1) {
     s.genHtml();
-
 }
 else {
     if (engine.isSimulated === false) {
@@ -274,8 +263,8 @@ wss.on('connection', (ws) => {
 //------------------------------------------------------------------------------
 // The web server
 //
-var server = http.createServer((req,res) => {
-    var filename = 'html/dist/report.html';
+function WebSendFile(res, filename)
+{
     var stat     = fs.statSync(filename);
     
     res.writeHead(200, {
@@ -285,10 +274,20 @@ var server = http.createServer((req,res) => {
     var reader = fs.createReadStream(filename);
 
     res.on('error', (err) => {
+        log.error("http server:" + err);
         reader.end();
     });
 
-    reader.pipe(res);
+    reader.pipe(res);   
+}
+
+var server = http.createServer((req,res) => {
+    if (req.url === "/") {
+        WebSendFile(res, 'html/dist/report.html');
+    }
+    else if (req.url === "/dash") {
+        WebSendFile(res, 'hadash/dist/hadash.html');
+    }
     //res.end('It <b>Works</b>!! Path Hit: ' + req.url);    
 });
 

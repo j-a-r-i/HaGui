@@ -1,7 +1,7 @@
 //var cmd = require('./commands.js');
 
-//var wsUri = "ws://192.168.100.40:8080/";
-var wsUri = "ws://localhost:8080/";
+var wsUri = "ws://192.168.100.40:8080/";
+//var wsUri = "ws://localhost:8080/";
 //var output;
 var stat = null;
 var callbacks = {};
@@ -31,6 +31,16 @@ function init()
     websocket.onclose = onClose;
     websocket.onmessage = onMessage;
     websocket.onerror = onError;
+}
+
+function wsDone()
+{
+    console.log("wsDone");
+}
+
+function wsUse()
+{
+    console.log("wsUse");
 }
 
 //------------------------------------------------------------------------------
@@ -77,6 +87,7 @@ function updateStock()
 function onOpen(evt)
 {
     //updateCharts();
+    wsDone();
 }
 
 //------------------------------------------------------------------------------
