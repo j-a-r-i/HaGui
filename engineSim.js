@@ -99,14 +99,6 @@ function start()
 }
 
 //--------------------------------------------------------------------------------
-function action(name, state)
-{
-    log.history({time:   time(),
-		 action: name,
-		 state:  state});
-}
-
-//--------------------------------------------------------------------------------
 function time()
 {
     return gTime;
@@ -116,7 +108,6 @@ function time()
 module.exports = {
     init:  init,
    	start: start,
-    action: action,
     time: time,
     isSimulated: true
 };

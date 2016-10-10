@@ -67,37 +67,6 @@ function start()
 }
 
 //--------------------------------------------------------------------------------
-function action(name, state)
-{
-    log.history({time:   time(),
-		 action: name,
-		 state:  state});
-
-    switch (name) {
-    case measure.ACTION_CAR1:
-        if (gCar1) 
-            tcloud.power(gCar1, state).then();
-        break;
-    case measure.ACTION_CAR2:
-        if (gCar2) 
-            tcloud.power(gCar2, state).then();
-        break;
-    case measure.ACTION_LIGHT:
-        if (gLights) 
-            tcloud.power(gLights, state).then();
-        break;
-    case measure.ACTION_LIGHT2:
-        if (gLights) 
-            tcloud.power(gLights, state).then();
-        break;
-    case measure.ACTION_ROOM:
-        break;
-    case measure.ACTION_WEAT:
-        break; 
-    }
-}
-
-//--------------------------------------------------------------------------------
 function time()
 {
     return new Date();
@@ -107,7 +76,6 @@ function time()
 module.exports = {
     init:  init,
     start: start,
-    action: action,
     time: time,
     isSimulated: false
 };

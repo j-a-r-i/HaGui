@@ -1,0 +1,14 @@
+{
+  "name": "simulator",
+  "version": "1.0.0",
+  "description": "HA simulated environment",
+  "main": "simulator.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jari Ojanen",
+  "license": "ISC",
+  "dependencies": {
+    "mqtt": "^2.0.1"
+  }
+}

@@ -2,7 +2,7 @@
 /*
  * Copyright (C) 2015-6 Jari Ojanen
  */
-var version = "0.3.1";
+var version = "0.4.0";
 
 const SERVER_PORT=8090;
 const WS_PORT=8080;
@@ -11,6 +11,7 @@ var WebSocket  = require('ws').Server,
     events     = require('events'),
     http       = require('http'),
     fs         = require('fs'),
+    mqtt       = require('mqtt'),
     wss        = new WebSocket({port: WS_PORT}),
     config     = require('./config.json'),
     sche       = require('./scheduler.js'),
@@ -128,6 +129,7 @@ var myDweet = new dweet.Dweet();
 var myNasdaq = new nasdaq.Nasdaq();
 var gTime = new Date();
 var s = new sche.Scheduler();
+var mqttClient  = mqtt.connect(config.mqttServer);
 
 log.normal("HaGUI V" + version);
 log.normal("time: " + sche.toClock2(gTime));
@@ -199,33 +201,39 @@ engine.start();
 
 }));*/
 
+//--------------------------------------------------------------------------------
+mqttClient.on('connect', () => {
+  console.log('mqtt connected');
+  mqttClient.subscribe('sensor/#');
+});
+ 
+mqttClient.on('message', (topic, msg) => { 
+  console.log(topic + " - " + msg.toString())
+});
+
+//--------------------------------------------------------------------------------
+function action(name, state)
+{
+    log.history({time:   time(),
+		 action: name,
+		 state:  state});
+    mqttClient.publish('action/'+action, state);
+}
+
 /*
  * Register actions.
  */
-s.add(new sche.CarHeaterAction(measure.ACTION_CAR1, emitter, engine.action));
-
-s.add(new sche.CarHeaterAction(measure.ACTION_CAR2, emitter, engine.action));
-
-s.add(new sche.RangeAction(measure.ACTION_LIGHT, emitter, engine.action));
-
-s.add(new sche.RangeAction(measure.ACTION_LIGHT2, emitter, engine.action));
-
-s.add(new sche.RoomHeaterAction(measure.ACTION_ROOM, emitter, engine.action));
-
+s.add(new sche.CarHeaterAction(measure.ACTION_CAR1,  emitter, action));
+s.add(new sche.CarHeaterAction(measure.ACTION_CAR2,  emitter, action));
+s.add(new sche.RangeAction(measure.ACTION_LIGHT,     emitter, action));
+s.add(new sche.RangeAction(measure.ACTION_LIGHT2,    emitter, action));
+s.add(new sche.RoomHeaterAction(measure.ACTION_ROOM, emitter, action));
 s.load();
 
 // generate html template and exit
 //
 if (process.argv.indexOf("-gen") !== -1) {
     s.genHtml();
-}
-else {
-    if (engine.isSimulated === false) {
-        s.start();
-    }
-    else {
-        emitter.emit("temp", -12.0);
-    }
 }
 
 //------------------------------------------------------------------------------
@@ -283,7 +291,6 @@ var server = http.createServer((req,res) => {
 server.listen(SERVER_PORT, () => {
     console.log("Server listening on: http://localhost:%s", SERVER_PORT);
 });
-
 
 //------------------------------------------------------------------------------
 process.on('exit', () => {
