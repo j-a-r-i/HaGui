@@ -92,7 +92,7 @@ class Action {
 		return this._name;
 	}
 	
-        setVal(name, val)
+    setVal(name, val)
 	{
 		console.log(this._name + "." + name + " = " + val);
 		this[name] = val;

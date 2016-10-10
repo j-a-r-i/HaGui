@@ -43,94 +43,83 @@ const CMD_GETVAL   = "gval";
 const CMD_SCHEDULERS = "sche";
 const CMD_PING     = "ping";
 
+var gMeasure = new measure.MeasureData();
+
+var gCommands = {};
+
+gCommands[CMD_MEASURES] = (msg,resp) => {
+    resp.data = [gMeasure.header()];
+
+    gMeasures.forEach((i) => {
+        resp.data.push(i);
+    });
+};
+gCommands[CMD_STOCK] = (msg,resp) => {
+    resp.data = gNasdaq;
+};
+gCommands[CMD_TV] = (msg,resp) => {
+    resp.data = [];
+};
+gCommands[CMD_LATEST] = (msg,resp) => {
+    if (gMeasures.length === 0) {
+        resp.values = [];
+    }
+    else {
+        var item = gMeasures[gMeasures.length - 1];
+        var headers = gMeasure.header();
+        resp.values = {}
+    
+        for (var i in headers) {
+            resp.values[headers[i]] = item[i];
+        }
+    }
+};
+gCommands[CMD_WEATHER] = (msg,resp) => {
+    resp.data = gWeather;
+};
+gCommands[CMD_STATUS] = (msg,resp) => {
+    resp.ver = version;
+    resp.load = info.loadavg();
+    resp.mem = info.meminfo();
+    resp.errors = log.getErrors();
+    resp.history = log.getHistory();
+};
+gCommands[CMD_GETVAL] = (msg,resp) => {
+    resp.data = s.get(msg.action);
+};
+gCommands[CMD_SETVAL] = (msg,resp) => {
+    s.set(msg.action, msg.values);
+};
+gCommands[CMD_SCHEDULERS] = (msg,resp) => {
+    resp.data = [];
+    s._actions.forEach((a) => {
+        var i = {
+            name: a.name,
+            values: a.strings()
+        };
+        resp.data.push(i);
+    });
+};
+gCommands[CMD_PING] = (msg,resp) => {
+    resp.data = ['PING'];
+};
+
 //--------------------------------------------------------------------------------
 function onWsMessage(message)
 {
     var resp = { cmd: message.cmd };
+    let found = false;
 
     log.normal("executing " + message.cmd);
     
-    switch (message.cmd) {
-    case CMD_MEASURES:
-        var m = new measure.MeasureData();
-        var arr = [m.header()];
-
-        gMeasures.forEach(function(i) {
-            arr.push(i);
-        });
-        m = null;
-       
-        resp.data = arr;
-        break;
-
-    case CMD_STOCK:
-        resp.data = gNasdaq;
-        break;
-        
-    case CMD_TV:
-        resp.data = [];
-        break;
-
-    case CMD_LATEST:
-        if (gMeasures.length === 0) {
-            resp.values = [];
-        }
-        else {
-                var item = gMeasures[gMeasures.length - 1];
-                var m = new measure.MeasureData();
-                var headers = m.header();
-                var obj = {}
-            
-                for (var i in headers) {
-            obj[headers[i]] = item[i];
-                };
-
-                resp.values = obj;
-        }
-        break;
-
-    case CMD_WEATHER:
-        resp.data = gWeather;
-        break;
-
-    case CMD_STATUS:
-        resp.ver = version;
-        resp.load = info.loadavg();
-        resp.mem = info.meminfo();
-        resp.errors = log.getErrors();
-        resp.history = log.getHistory();
-        break;
-        
-    case CMD_SETVAL:
-        s.set(message.action, message.values);
-        break;
-
-    case CMD_GETVAL:
-        resp.values = s.get(message.action);
-        break;
-        
-    case CMD_SCHEDULERS:
-        //resp.items = ['one', 'two', 'three'];
-        var lst = [];
-        s._actions.forEach((a) => {
-            var i = {};
-            i.name = a.name;
-            i.values = a.strings();
-            lst.push(i);
-        });
-        resp.items = lst;
-        break;
-
-    case CMD_PING:
-        resp.ping = 1;
-        break;
-        
-    default:
-        resp.error = "unknown command";
-        log.error("unknown command: " + message);
-        break;
+    var cb = gCommands[message.cmd];
+    if (cb != null) {
+        cb(message, resp);
     }
-
+    else {
+        resp.error = "unknown command";
+        log.error("unknown command: " + message.cmd);        
+    }
     return resp;
 }
 
@@ -246,7 +235,7 @@ wss.on('connection', (ws) => {
     console.log("WebSocket opened.");
     ws.on('message', (message) => {
         try {
-            //console.log('received: %s', message);
+            console.log('WebSocket received: %s', message);
             var ret = onWsMessage(JSON.parse(message));
             ws.send(JSON.stringify(ret));
         }
