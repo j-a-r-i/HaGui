@@ -6,6 +6,7 @@
   "dependencies": {
     "oauth": "latest",
     "ws": "latest",
-    "xml2js": "latest"
+    "xml2js": "latest",
+    "mqtt": "latest"
   }
 }

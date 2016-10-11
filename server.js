@@ -20,18 +20,15 @@ var WebSocket  = require('ws').Server,
     log        = require('./log.js'),
     dweet      = require('./dweet.js'),
     nasdaq     = require("./nasdaq.js"),
-    measure    = require('./measure.js'),
-    engine     = require('./engineSim.js');
+    measure    = require('./measure.js');
 
 var 
     gMeasures = [],
     gNasdaq = [],
     gWeather = [],
-    gLights = null,
-    gCar1 = null,
-    gCar2 = null,
     emitter = new events.EventEmitter(),
-    emitterMeas = new events.EventEmitter();
+    emitterMeas = new events.EventEmitter(),
+    gMeasure = new measure.MeasureData();
 
 const CMD_MEASURES = "meas";
 const CMD_STOCK    = "stoc";
@@ -43,8 +40,6 @@ const CMD_SETVAL   = "sval";
 const CMD_GETVAL   = "gval";
 const CMD_SCHEDULERS = "sche";
 const CMD_PING     = "ping";
-
-var gMeasure = new measure.MeasureData();
 
 var gCommands = {};
 
@@ -134,21 +129,16 @@ var mqttClient  = mqtt.connect(config.mqttServer);
 log.normal("HaGUI V" + version);
 log.normal("time: " + sche.toClock2(gTime));
 
+/*
 emitterMeas.on("measure", (data) => {
     log.verbose("measure");
     
     gMeasures.push(data.values());
-    
-    if (!engine.isSimulated) {
-        var obj = data.getJson();
-        myDweet.send(obj);
-    }
-    else {
-        //var obj = data.getJson();
-        //console.log(obj);        
-    }
+
+	//TODO dweet commented out!
+    //var obj = data.getJson();
+    //myDweet.send(obj);
             
-    //if (simulated === false)
     emitter.emit("temp", data.temp2);
 
     if (gMeasures.length > 300)
@@ -158,9 +148,7 @@ emitterMeas.on("tick", (time) => {  // for simulated engine
     var c = sche.toClock2(time);
     s.tick(c);
 });
-
-engine.init(emitterMeas);
-engine.start();
+*/
 
 // Read initial data
 //
@@ -203,12 +191,16 @@ engine.start();
 
 //--------------------------------------------------------------------------------
 mqttClient.on('connect', () => {
-  console.log('mqtt connected');
-  mqttClient.subscribe('sensor/#');
+    console.log('mqtt connected');
+    mqttClient.subscribe('sensor/#');
 });
  
 mqttClient.on('message', (topic, msg) => { 
-  console.log(topic + " - " + msg.toString())
+    console.log(topic + " - " + msg.toString());
+    gMeasure.set(topic, msg.toString());
+    if (topic === "sensor/h1") {
+        console.log(gMeasure.values());
+    }
 });
 
 //--------------------------------------------------------------------------------

@@ -12,11 +12,10 @@ function oneDecimal(x)
 
 //--------------------------------------------------------------------------------
 class MeasureValue {
-    constructor(shortName, name) {
+    constructor(name) {
         this.value = -99.0;
         this.name = name;
-        this.shortName = shortName;
-        this.unit = "";
+        //this.unit = "";
     }
 }
 
@@ -24,10 +23,11 @@ class MeasureValue {
 class MeasureData {
     constructor() {
         this.tm = new Date(0);
-        this.items = [ new MeasureValue("t1", "ulko.temp"),
-                       new MeasureValue("t2", "varasto.temp"),
-                       new MeasureValue("t3", "other"),
-                       new MeasureValue("h1", "varasto.humidity") ];
+        this.items = [ new MeasureValue("time"),
+                       new MeasureValue("t1"),
+                       new MeasureValue("t2"),
+                       new MeasureValue("t3"),
+                       new MeasureValue("h1") ];
     }
 
     set(name, value) {
@@ -35,7 +35,7 @@ class MeasureData {
             this.items.forEach( (x) => {
                 if (x.name == name) {
                     x.value = oneDecimal(parseFloat(value));
-            found = true;
+                    found = true;
                 }
             });
         if (found == false) {
@@ -45,7 +45,6 @@ class MeasureData {
 
     getJson() {
         var ret = {};
-        ret['tm'] = this.tm;
         this.items.forEach((x) => {
             ret[x.name] = x.value; 
         });
@@ -54,19 +53,15 @@ class MeasureData {
     }
 
     header() {
-        var resp = ['time'];
-        this.items.forEach( (x) => {
-            resp.push(x.shortName);
+        return this.items.map((i) => {
+            return i.name;
         });
-        return resp;
     }
     
     values() {
-        var resp = [this.tm];
-        this.items.forEach( (x) => {
-            resp.push(x.value);
+        return this.items.map((i) => {
+            return x.value;
         });
-        return resp;
     }                     
 
         
