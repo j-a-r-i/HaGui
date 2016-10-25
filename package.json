@@ -1,12 +1,13 @@
 {
   "name": "HaGUI",
   "description": "Home Automation GUI",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "dependencies": {
     "oauth": "latest",
     "ws": "latest",
     "xml2js": "latest",
-    "mqtt": "latest"
+    "mqtt": "latest",
+    "redis": "latest"
   }
 }

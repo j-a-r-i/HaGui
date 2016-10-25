@@ -1,18 +1,18 @@
 "use strict";
 /*
- * Copyright (C) 2015 Jari Ojanen
+ * Copyright (C) 2015-6 Jari Ojanen
  */
 
 var fs = require('fs');
 
 //-----------------------------------------------------------------------------
-function clock(hour,min)
+function toClock(hour,min)
 {
 	return hour*60 + min;
 }
 
 //-----------------------------------------------------------------------------
-function clock2(date)
+function toClock2(date)
 {
 	return date.getHours()*60 + date.getMinutes();
 }
@@ -54,7 +54,7 @@ class VarTime extends VarBase {
     }
 
     setVal(obj) {
-        var time = clock(obj[0], obj[1]);	
+        var time = toClock(obj[0], obj[1]);
         this.value = time;
     }
     
@@ -104,7 +104,7 @@ class Action {
             this._exports.forEach((i) => {
                 if (i.name === key) {
                     i.setVal(obj[key]);
-                };
+                }
             });
         });
 	}
@@ -304,13 +304,15 @@ class RoomHeaterAction extends Action {
 	{
 		super(aname, false);
 		this._low  = new VarInteger('low', 0, true);
-	        this._high = new VarInteger('high', 0, true);;
+	        this._high = new VarInteger('high', 0, true);
                 this._exports = [this._low, this._high];
         
 		this._callback = func;
 		
 		emitter.on("temp", (temp) => {
 			this.setTemp(temp);
+		});
+		emitter.on("tVarasto", (temp) => {
 		});
 	}
 	
@@ -409,7 +411,7 @@ class Scheduler {
 	
 	genHtml()
 	{
-        var fname = 'html/partials/config2.html'
+        var fname = 'html/partials/config2.html';
 		var fout = fs.createWriteStream(fname);
         fout.on('error', (err) => {
            console.log("Error in " + fname);
@@ -438,8 +440,8 @@ class Scheduler {
 
 //-----------------------------------------------------------------------------
 module.exports = {
-    toClock: clock,
-    toClock2: clock2,
+    toClock: toClock,
+    toClock2: toClock2,
     toStr: toStr,
     RangeAction: RangeAction,
     IntervalAction: IntervalAction,

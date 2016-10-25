@@ -12,6 +12,8 @@ var WebSocket  = require('ws').Server,
     http       = require('http'),
     fs         = require('fs'),
     mqtt       = require('mqtt'),
+//    sqlite     = require('sqlite3').verbose(),
+    redis      = require('redis'),
     wss        = new WebSocket({port: WS_PORT}),
     config     = require('./config.json'),
     sche       = require('./scheduler.js'),
@@ -26,9 +28,12 @@ var
     gMeasures = [],
     gNasdaq = [],
     gWeather = [],
-    emitter = new events.EventEmitter(),
+    emitter     = new events.EventEmitter(),
     emitterMeas = new events.EventEmitter(),
-    gMeasure = new measure.MeasureData();
+    gMeasure    = new measure.MeasureData(),
+//    db          = new sqlite.Database(':memory:');
+    redisClient = redis.createClient(6379, config.redisServer);
+
 
 const CMD_MEASURES = "meas";
 const CMD_STOCK    = "stoc";
@@ -63,7 +68,7 @@ gCommands[CMD_LATEST] = (msg,resp) => {
     else {
         var item = gMeasures[gMeasures.length - 1];
         var headers = gMeasure.header();
-        resp.values = {}
+        resp.values = {};
     
         for (var i in headers) {
             resp.values[headers[i]] = item[i];
@@ -109,7 +114,7 @@ function onWsMessage(message)
     log.normal("executing " + message.cmd);
     
     var cb = gCommands[message.cmd];
-    if (cb != null) {
+    if (cb !== null) {
         cb(message, resp);
     }
     else {
@@ -128,6 +133,8 @@ var mqttClient  = mqtt.connect(config.mqttServer);
 
 log.normal("HaGUI V" + version);
 log.normal("time: " + sche.toClock2(gTime));
+
+
 
 /*
 emitterMeas.on("measure", (data) => {
@@ -196,20 +203,34 @@ mqttClient.on('connect', () => {
 });
  
 mqttClient.on('message', (topic, msg) => { 
-    console.log(topic + " - " + msg.toString());
-    gMeasure.set(topic, msg.toString());
-    if (topic === "sensor/h1") {
-        console.log(gMeasure.values());
+    //console.log(topic + " - " + msg.toString());
+    if (topic === "sensor/time") {
+        gTime.setMinutes(gTime.getMinutes() + 10);
+        gMeasure.time = gTime;
+        s.tick(sche.toClock2(gTime));
+    }
+    else {
+        gMeasure.set(topic.substring(7), msg.toString());
+        if (topic === "sensor/h1") {
+            //console.log(gMeasure.values());
+            console.log(gMeasure.RedisKey, gMeasure.RedisValue);
+            redisClient.set(gMeasure.RedisKey, gMeasure.RedisValue);
+        }
     }
 });
+
+
+redisClient.on('connect', () => {
+    console.log('redis connected');
+})
 
 //--------------------------------------------------------------------------------
 function action(name, state)
 {
-    log.history({time:   time(),
+    log.history({time:   gTime,
 		 action: name,
 		 state:  state});
-    mqttClient.publish('action/'+action, state);
+    mqttClient.publish('action/'+name, state.toString());
 }
 
 /*

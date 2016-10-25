@@ -7,27 +7,54 @@ var log        = require('./log.js');
 //--------------------------------------------------------------------------------
 function oneDecimal(x) 
 {
-    return Math.round(x * 10) / 10;
+    return Math.round(x * 10.0) / 10.0;
 }
 
 //--------------------------------------------------------------------------------
 class MeasureValue {
-    constructor(name) {
+    constructor(name, sqlType) {
         this.value = -99.0;
         this.name = name;
+        this.sqlType = sqlType;
         //this.unit = "";
+    }
+
+    get sqlDefine() {
+        return this.name + " " + this.sqlType;
     }
 }
 
 //--------------------------------------------------------------------------------
 class MeasureData {
+    get SQL_CREATE() {
+        let defs = this.items.map((i) => {
+              return i.sqlDefine
+            }).join(', ');
+        return "CREATE TABLE meas(" + defs + ")";
+    }
+
+    get SQL_INSERT() {
+        let vals = this.items.map((i) => {
+              return i.value.toString()
+            }).join(',');
+        return "INSERT INTO meas VALUES (" + vals + ")";
+    }
+
+    get RedisKey() {
+        var epoc = this.time.valueOf();
+        return epoc.toString();
+    }
+
+    get RedisValue() {
+        return JSON.stringify(this.getJson());
+    }
+
     constructor() {
-        this.tm = new Date(0);
-        this.items = [ new MeasureValue("time"),
-                       new MeasureValue("t1"),
-                       new MeasureValue("t2"),
-                       new MeasureValue("t3"),
-                       new MeasureValue("h1") ];
+        this.items = [ new MeasureValue("time", "DATE"),
+                       new MeasureValue("t1", "REAL"),
+                       new MeasureValue("t2", "REAL"),
+                       new MeasureValue("t3", "REAL"),
+                       new MeasureValue("h1", "REAL") ];
     }
 
     set(name, value) {
@@ -38,7 +65,7 @@ class MeasureData {
                     found = true;
                 }
             });
-        if (found == false) {
+        if (found === false) {
             log.error("invalid measurement id: "+name);
         }
     }                     
@@ -60,16 +87,16 @@ class MeasureData {
     
     values() {
         return this.items.map((i) => {
-            return x.value;
+            return i.value;
         });
     }                     
 
         
     get time() {
-        return this.tm;
+        return this.items[0].value;
     }
     set time(value) {
-        this.tm = value;
+        this.items[0].value = value;
     }
 }
 
