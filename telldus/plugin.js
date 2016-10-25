@@ -6,9 +6,10 @@ var gTimer,
     tcloud,
     gLights,
     gCar1,
-    gCar2;
+    gCar2,
+    gVarasto;
 
-var client  = mqtt.connect('mqtt://192.168.100.38')
+var client  = mqtt.connect('mqtt://192.168.100.38');
 
 //--------------------------------------------------------------------------------
 // A periodic timer for reading data from Telldus server.
@@ -56,21 +57,6 @@ function action(name, state)
     }
 }
 
-
-//--------------------------------------------------------------------------------
-client.on('connect', () => {
-  console.log('connected');
-  client.subscribe('action');
-
-  onTimer();
-  gTimer = setInterval(onTimer, 600000);  // 10 min
-});
-
-client.on('message', (topic, msg) => { 
-  console.log(topic + " - " + msg.toString())
-  //client.end()
-});
-
 //--------------------------------------------------------------------------------
 tcloud = new telldus.Telldus();
 
@@ -82,5 +68,20 @@ tcloud.init((err) => {
         gLights = tcloud.getDevice("valot1");
         gCar1   = tcloud.getDevice("auto1");
         gCar2   = tcloud.getDevice("auto2");
+        gVarasto = tcloud.getDevice("varasto");
     }
+});
+
+//--------------------------------------------------------------------------------
+client.on('connect', () => {
+  console.log('connected');
+  client.subscribe('action');
+
+  onTimer();
+  gTimer = setInterval(onTimer, 600000);  // 10 min
+});
+
+client.on('message', (topic, msg) => { 
+  console.log(topic + " - " + msg.toString());
+  //client.end()
 });

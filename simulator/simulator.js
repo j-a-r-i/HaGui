@@ -1,5 +1,7 @@
 var mqtt = require('mqtt');
-var client  = mqtt.connect('mqtt://192.168.100.38');
+var config = require('../config.json');
+
+var client  = mqtt.connect(config.mqttServer);
 var gTimer;
 var gCounter = 0;
 var simFast = true;
@@ -22,7 +24,7 @@ var gItems = [
       value: 40,
       min: 30,
       max: 60}
-]
+];
 
 //--------------------------------------------------------------------------------
 function random (low, high)
@@ -77,6 +79,6 @@ client.on('connect', () => {
 });
  
 client.on('message', (topic, msg) => { 
-  console.log(topic + " - " + msg.toString())
+  console.log(topic + " - " + msg.toString());
   //client.end()
 });
