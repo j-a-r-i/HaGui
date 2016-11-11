@@ -35,16 +35,16 @@ var
     redisClient = redis.createClient(6379, config.redisServer);
 
 
-const CMD_MEASURES = "meas";
-const CMD_STOCK    = "stoc";
-const CMD_TV       = "tvtv";
-const CMD_LATEST   = "last";
-const CMD_WEATHER  = "weat";
-const CMD_STATUS   = "stat";
-const CMD_SETVAL   = "sval";
-const CMD_GETVAL   = "gval";
-const CMD_SCHEDULERS = "sche";
-const CMD_PING     = "ping";
+const CMD_MEASURES = 'meas';
+const CMD_STOCK    = 'stoc';
+const CMD_TV       = 'tvtv';
+const CMD_LATEST   = 'last';
+const CMD_WEATHER  = 'weat';
+const CMD_STATUS   = 'stat';
+const CMD_SETVAL   = 'sval';
+const CMD_GETVAL   = 'gval';
+const CMD_SCHEDULERS = 'sche';
+const CMD_PING     = 'ping';
 
 var gCommands = {};
 
@@ -102,7 +102,7 @@ gCommands[CMD_SCHEDULERS] = (msg,resp) => {
     });
 };
 gCommands[CMD_PING] = (msg,resp) => {
-    resp.data = ['PING'];
+    resp.data = [['PING']];
 };
 
 //--------------------------------------------------------------------------------
@@ -111,15 +111,14 @@ function onWsMessage(message)
     var resp = { cmd: message.cmd };
     let found = false;
 
-    log.normal("executing " + message.cmd);
-    
     var cb = gCommands[message.cmd];
-    if (cb !== null) {
+    if ((cb !== null) && (cb !== undefined)) {
+        log.normal("executing " + message.cmd);
         cb(message, resp);
     }
     else {
-        resp.error = "unknown command";
         log.error("unknown command: " + message.cmd);        
+        resp.error = "unknown command";
     }
     return resp;
 }
@@ -165,6 +164,16 @@ emitterMeas.on("tick", (time) => {  // for simulated engine
     gNasdaq = result;
 });*/
 
+// Read simulated FMI data.
+//
+fmi.fmiReadFile("wfs.xml", (err,arr) => {
+    if (err) {
+        return log.error(err);
+    }
+    gWeather = arr;
+});
+
+
 //--------------------------------------------------------------------------------
 // Configure scheduler actions
 //
@@ -172,13 +181,11 @@ emitterMeas.on("tick", (time) => {  // for simulated engine
                               sche.toClock2(gTime), 
                               () => {
     log.verbose("reading weather data");
-    fmi.fmiRead(engine.isSimulated, function(err,arr) {
+    fmi.fmiRead((err,arr) => {
         if (err) {
-            log.error(err);
+            return log.error(err);
         }
-        else {
-            gWeather = arr;
-        }
+        gWeather = arr;
     });
 }));
 */
@@ -211,6 +218,9 @@ mqttClient.on('message', (topic, msg) => {
     }
     else {
         gMeasure.set(topic.substring(7), msg.toString());
+        if (topic === "sensor/t2") {
+            emitter.emit("temp", msg.toString());
+        }
         if (topic === "sensor/h1") {
             //console.log(gMeasure.values());
             console.log(gMeasure.RedisKey, gMeasure.RedisValue);

@@ -4,6 +4,7 @@
  */
 
 var myhttp = require('./myhttp'),
+    log = require('./log'),
     querystring = require('querystring');
 
 const SITE = "dweet.io";
@@ -29,12 +30,12 @@ class Dweet {
             .then((val) => {
                 switch (val.this) {
                 case  "failed":
-                    console.log("Error dweet: " + val.because);
+                    log.error("dweet: " + val.because);
                     break;
                 case "succeeded":
                     break;
                 default:
-                    console.log(val);
+                    log.verbose("dweet: " + val);
                     break;
                 }
             });

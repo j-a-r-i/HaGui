@@ -8,6 +8,7 @@
 var fs = require("fs"),
     myhttp = require('./myhttp'),
     config = require('./config'),
+    log = require('./log'),
     parser = require("xml2js").parseString;
 
 var url = "http://data.fmi.fi/fmi-apikey/" + config.fmi_key + "/wfs?request=getFeature&storedquery_id=fmi::forecast::hirlam::surface::point::multipointcoverage&place=oittaa";
@@ -69,10 +70,11 @@ function parseXml(buf, cb)
 {
     var arr;
     
-    parser(buf, function(err, result) {
-        if (err)
-            cb(err, null);
-
+    parser(buf, (err, result) => {
+        if (err) {
+            log.error("parseXml: " + err);
+            return cb(err, null);
+        }
         var d;
         var n = result;
         var path = ['wfs:FeatureCollection',
@@ -86,8 +88,10 @@ function parseXml(buf, cb)
                 n = n[path[i]];
             else
                 n = n[path[i]][0];
-            if (n === null) 
-                return cb("Invalid XML", null);
+            if (n === null) {
+                log.error("Invalid FMI XML");
+                return cb("Invalid FMI XML", null);
+            }
         }
         
         d = n['gml:domainSet'][0];
@@ -97,7 +101,7 @@ function parseXml(buf, cb)
         
         arr = n.trim().split("\n");
         
-        arr = arr.map(function(i) { 
+        arr = arr.map((i) => { 
             i = i.trim();
             if (i.length === 0)
                 return null;
@@ -133,37 +137,55 @@ function parseXml(buf, cb)
         arr.unshift(FIELDS.map(function(i) {
             return i.name;
         }));
+        cb(null, arr);
     });
-    cb(null, arr);
 }
 
 //-----------------------------------------------------------------------------
-function fmiRead(simulated, cb)
+function fmiReadFile(filename, cb)
 {
-    if (simulated === true) {
-        fs.readFile("wfs.xml", "utf8", function(err, html) {
-            if (!!err) 
+    fs.readFile(filename, "utf8", (err, html) => {
+        if (!!err) {
+            log.error("fmiReadFile:" + err);
                 return cb(err, null);
+        }
             parseXml(html, cb);
         });        
-    }
-    else {
-        myhttp.get(url, function(err, html) {
-            if (!!err) {
+}
+
+//-----------------------------------------------------------------------------
+function fmiWriteFile(filename, cb)
+{
+    myhttp.get(url, (err, html) => {
+        if (!!err) {
+            log.error("fmiWriteFile:" + err);
+            return cb(err, null);
+        }
+        fs.writeFile(filename, html, function(err) {
+            if(err) {
+                log.error("fmiWriteFile:" + err);
                 return cb(err, null);
-            }
-    /*        fs.writeFile("wfs.xml", html, function(err) {
-                if(err) {
-                    return console.log(err);
                 }
-                console.log("wfs.xml was saved!");
-            });*/
-            parseXml(html, cb);
+            log.verbose(filename + " was saved!");
+            cb(null, html);
         });
+    });
+}
+
+//-----------------------------------------------------------------------------
+function fmiRead(cb)
+{
+    myhttp.get(url, (err, html) => {
+        if (!!err) {
+            return cb(err, null);
     }
+        parseXml(html, cb);
+    });
 }
 
 //-----------------------------------------------------------------------------
 module.exports = {
-	fmiRead: fmiRead,
+    fmiReadFile: fmiReadFile,
+    fmiWriteFile: fmiWriteFile,
+	fmiRead: fmiRead
 };

@@ -3,13 +3,15 @@
 var net = require('net'),
     rl  = require('readline'),
     fs  = require('fs'),
+    log = require('./log'),
     config = require('./config.json');
 
 // see https://www.linuxtv.org/vdrwiki/index.php/SVDRP
     
     
 var PORT = 6419,
-    HOST = config.vdrServer;
+    HOST = config.vdrServer,
+    FILENAME = 'epg.dat';
 
 //------------------------------------------------------------------------------
 class EpgData
@@ -34,7 +36,7 @@ class EpgData
 //------------------------------------------------------------------------------
 function download()
 {
-    var fout   = fs.createWriteStream("epg.dat");
+    var fout   = fs.createWriteStream(FILENAME);
     var socket = net.createConnection(PORT, HOST);
 
     socket.on('connect', () => {
@@ -55,7 +57,7 @@ function download()
 //------------------------------------------------------------------------------
 function load()
 {
-    var reader = rl.createInterface({input: fs.createReadStream('epg.dat')});
+    var reader = rl.createInterface({input: fs.createReadStream(FILENAME)});
     var list = [];
     var epg = new EpgData();
     reader.on('line', (line) => {
