@@ -2,7 +2,10 @@
 /*
  * Copyright (C) 2015-6 Jari Ojanen
  */
-var log        = require('./log.js');
+var log = require('./log.js'),
+    v   = require('./var'),
+    cmd  = require('./commands');
+
 
 //--------------------------------------------------------------------------------
 function oneDecimal(x) 
@@ -11,35 +14,7 @@ function oneDecimal(x)
 }
 
 //--------------------------------------------------------------------------------
-class MeasureValue {
-    constructor(name, sqlType) {
-        this.value = -99.0;
-        this.name = name;
-        this.sqlType = sqlType;
-        //this.unit = "";
-    }
-
-    get sqlDefine() {
-        return this.name + " " + this.sqlType;
-    }
-}
-
-//--------------------------------------------------------------------------------
 class MeasureData {
-    get SQL_CREATE() {
-        let defs = this.items.map((i) => {
-              return i.sqlDefine
-            }).join(', ');
-        return "CREATE TABLE meas(" + defs + ")";
-    }
-
-    get SQL_INSERT() {
-        let vals = this.items.map((i) => {
-              return i.value.toString()
-            }).join(',');
-        return "INSERT INTO meas VALUES (" + vals + ")";
-    }
-
     get RedisKey() {
         var epoc = this.time.valueOf();
         return epoc.toString();
@@ -50,11 +25,11 @@ class MeasureData {
     }
 
     constructor() {
-        this.items = [ new MeasureValue("time", "DATE"),
-                       new MeasureValue("t1", "REAL"),
-                       new MeasureValue("t2", "REAL"),
-                       new MeasureValue("t3", "REAL"),
-                       new MeasureValue("h1", "REAL") ];
+        this.items = [ new v.MValue("time"),
+                       new v.MValue("t1"),
+                       new v.MValue("t2"),
+                       new v.MValuee("t3"),
+                       new v.MValue("h1") ];
     }
 
     set(name, value) {
@@ -99,17 +74,3 @@ class MeasureData {
         this.items[0].value = value;
     }
 }
-
-//-----------------------------------------------------------------------------
-module.exports = {
-	MeasureData: MeasureData,
-	MeasureValue: MeasureValue,
-    
-    ACTION_CAR1 : "car1",
-    ACTION_CAR2 : "car2",
-    ACTION_LIGHT : "light",
-    ACTION_LIGHT2 : "light2",
-    ACTION_ROOM : "room",
-    ACTION_WEAT : "weather",
-    ACTION_CLOCK1: "clock1"
-};

@@ -10,6 +10,7 @@ Collect data from several WEB APIs.
  - dweet.io -- external interface to temperature/humidity data
  - FMI -- weather forecast
  - Nasdaq (UI missing)
+ - MQTT
  - Strava (coming)
  - VDR server (coming)
 

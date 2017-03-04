@@ -9,6 +9,9 @@ var http = require('http'),
 
 //-----------------------------------------------------------------------------
 /** http get without promise.
+ * 
+ * @param {String} url
+ * @param {function(Error, String)} callback
  */
 function get(url, callback)
 {
@@ -32,6 +35,9 @@ function get(url, callback)
 
 //-----------------------------------------------------------------------------
 /** http get with promise.
+ * 
+ * @param {String} url
+ * @returns {String}
  */
 function getp(url)
 {
@@ -56,13 +62,51 @@ function getp(url)
 }
 
 //-----------------------------------------------------------------------------
+/** http request with promise.
+ * @returns {Promise.<String>}
+ */
+function request(options, msg="")
+{
+    return new Promise((resolve,reject) => {
+	    var site = options.host;
+	    log.normal("request " + site + "...");
+        var r = http.request(options, (res) => {
+            if (res.statusCode != 200) {
+                log.error('status: ' + res.statusCode + "  " + res.statusMessage);
+                return reject(res.statusCode);
+            }
+            //console.log('header: ' + JSON.stringify(res.headers));
+            var data = "";
+            res.on('data', (d) => {
+                data += d;
+            });
+            res.on('end', () => {
+		        log.normal("request " + site + " done.");
+                resolve(data.toString());
+            });
+        });
+        r.on('error', (err) => {
+            log.error(site);
+            console.log(err);
+            reject(err);
+        });
+        if (msg.length > 0)
+            r.write(msg);
+        r.end();
+    });
+}
+
+//-----------------------------------------------------------------------------
 /** https request with promise.
+ * @param {Object} options
+ * @param {Boolean} parseJson - Is response in json format
+ * @returns {Promise}
  */
 function requests(options, parseJson)
 {
     return new Promise((resolve,reject) => {
 	    var site = options.host;
-	    log.normal("request " + site + "...");
+	    log.verbose("request " + site + "...");
         var r = https.request(options, (res) => {
             if (res.statusCode != 200) {
                 console.log('status: ' + res.statusCode);
@@ -74,7 +118,7 @@ function requests(options, parseJson)
                 data += d;
             });
             res.on('end', () => {
-		        log.normal("request " + site + " done.");
+		        log.verbose("request " + site + " done.");
                 if (parseJson) {
                     var obj = {};
                     try {
@@ -101,5 +145,6 @@ function requests(options, parseJson)
 module.exports = {
 	get: get,
 	getp: getp,
-    requests: requests,
+    request: request,
+    requests: requests
 };

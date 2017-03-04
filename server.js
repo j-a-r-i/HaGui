@@ -1,9 +1,7 @@
 "use strict";
 /*
- * Copyright (C) 2015-6 Jari Ojanen
+ * Copyright (C) 2015-7 Jari Ojanen
  */
-var version = "0.4.0";
-
 const SERVER_PORT=8090;
 const WS_PORT=8080;
 
@@ -11,272 +9,174 @@ var WebSocket  = require('ws').Server,
     events     = require('events'),
     http       = require('http'),
     fs         = require('fs'),
-    mqtt       = require('mqtt'),
-//    sqlite     = require('sqlite3').verbose(),
-    redis      = require('redis'),
-    wss        = new WebSocket({port: WS_PORT}),
     config     = require('./config.json'),
-    sche       = require('./scheduler.js'),
-    fmi        = require('./fmi.js'),
-    info       = require('./info.js'),
-    log        = require('./log.js'),
-    dweet      = require('./dweet.js'),
-    nasdaq     = require("./nasdaq.js"),
-    measure    = require('./measure.js');
+    rules      = require('./rules'),
+    log        = require('./log'),
+    dweet      = require('./dweet'),
+    cmd        = require('./commands');
 
 var 
-    gMeasures = [],
-    gNasdaq = [],
-    gWeather = [],
-    emitter     = new events.EventEmitter(),
-    emitterMeas = new events.EventEmitter(),
-    gMeasure    = new measure.MeasureData(),
-//    db          = new sqlite.Database(':memory:');
-    redisClient = redis.createClient(6379, config.redisServer);
+    gPlugins  = [],
+    gData     = {},
+    gCommands = {},
+    emitter   = new events.EventEmitter(),
+    wss       = new WebSocket({port: WS_PORT}),
+    myDweet   = new dweet.Dweet(),
+    gTime     = new Date();
 
 
-const CMD_MEASURES = 'meas';
-const CMD_STOCK    = 'stoc';
-const CMD_TV       = 'tvtv';
-const CMD_LATEST   = 'last';
-const CMD_WEATHER  = 'weat';
-const CMD_STATUS   = 'stat';
-const CMD_SETVAL   = 'sval';
-const CMD_GETVAL   = 'gval';
-const CMD_SCHEDULERS = 'sche';
-const CMD_PING     = 'ping';
+gPlugins.push( require('./log') );
+gPlugins.push( require('./info') );
+gPlugins.push( require('./mqtt') );
+gPlugins.push( require('./info') );
+gPlugins.push( require('./fmi') );
+gPlugins.push( require('./nasdaq') );
+//gPlugins.push( require('./vdr') );
+//gPlugins.push( require('./strava') );
 
-var gCommands = {};
+for (var plugin of gPlugins) {
+    log.normal(plugin.name);
+    var values = plugin.initialize(gCommands);
 
-gCommands[CMD_MEASURES] = (msg,resp) => {
-    resp.data = [gMeasure.header()];
-
-    gMeasures.forEach((i) => {
-        resp.data.push(i);
+    values.forEach((value) => {
+        log.normal("   - value " + value.name);
+        gData[value.name] = value;
     });
-};
-gCommands[CMD_STOCK] = (msg,resp) => {
-    resp.data = gNasdaq;
-};
-gCommands[CMD_TV] = (msg,resp) => {
-    resp.data = [];
-};
-gCommands[CMD_LATEST] = (msg,resp) => {
-    if (gMeasures.length === 0) {
-        resp.values = [];
-    }
-    else {
-        var item = gMeasures[gMeasures.length - 1];
-        var headers = gMeasure.header();
-        resp.values = {};
-    
-        for (var i in headers) {
-            resp.values[headers[i]] = item[i];
-        }
-    }
-};
-gCommands[CMD_WEATHER] = (msg,resp) => {
-    resp.data = gWeather;
-};
-gCommands[CMD_STATUS] = (msg,resp) => {
-    resp.ver = version;
-    resp.load = info.loadavg();
-    resp.mem = info.meminfo();
-    resp.errors = log.getErrors();
-    resp.history = log.getHistory();
-};
-gCommands[CMD_GETVAL] = (msg,resp) => {
-    resp.data = s.get(msg.action);
-};
-gCommands[CMD_SETVAL] = (msg,resp) => {
-    s.set(msg.action, msg.values);
-};
-gCommands[CMD_SCHEDULERS] = (msg,resp) => {
-    resp.data = [];
-    s._actions.forEach((a) => {
-        var i = {
-            name: a.name,
-            values: a.strings()
-        };
-        resp.data.push(i);
+
+    Object.keys(plugin.action).map((key) => {
+        log.normal("   - action " + key);
     });
+}
+
+gCommands[cmd.PING] = (ws,args) => {
+    return [['PING', 'PING']];
 };
-gCommands[CMD_PING] = (msg,resp) => {
-    resp.data = [['PING']];
+
+gCommands[cmd.ARRAY] = (ws,args) => {
+    var arg = args[1];
+
+    return gData[arg].history;
 };
+
+gCommands[cmd.SCALAR] = (ws,args) => {
+    return gData[args[1]].value;
+};
+ 
+gCommands[cmd.GETVAL] = (ws,args) => {
+    return rules.getVar(args[1]);
+};
+
+gCommands[cmd.SETVAL] = (ws,args) => {
+    rules.setVar(args[1], args[2]);
+    return [];
+};
+
+gCommands[cmd.EVENT] = (ws, args) => {
+    rules.event(eventHandler, args[1], args[2]);
+}
 
 //--------------------------------------------------------------------------------
-function onWsMessage(message)
+function WsMessage(ws, args)
 {
-    var resp = { cmd: message.cmd };
+    var cmd = args[0];
+    var resp = { cmd: cmd };
     let found = false;
 
-    var cb = gCommands[message.cmd];
+    var cb = gCommands[cmd];
     if ((cb !== null) && (cb !== undefined)) {
-        log.normal("executing " + message.cmd);
-        cb(message, resp);
+        var ret = cb(ws, args);
+        if (ret !== null) {
+            WsResponse(ws, { cmd: cmd,
+                             arg: args[1],
+                             data: ret });
+        }
     }
     else {
-        log.error("unknown command: " + message.cmd);        
-        resp.error = "unknown command";
+        log.error(WEBSOCKET + "unknown command " + cmd);
+
+        WsResponse(ws, { cmd: cmd,
+                         arg: args[1],
+                         data: [["ERR","unknown command"]] });
     }
     return resp;
 }
 
-//--------------------------------------------------------------------------------
-var myDweet = new dweet.Dweet();
-var myNasdaq = new nasdaq.Nasdaq();
-var gTime = new Date();
-var s = new sche.Scheduler();
-var mqttClient  = mqtt.connect(config.mqttServer);
-
-log.normal("HaGUI V" + version);
-log.normal("time: " + sche.toClock2(gTime));
-
-
-
-/*
-emitterMeas.on("measure", (data) => {
-    log.verbose("measure");
-    
-    gMeasures.push(data.values());
-
-	//TODO dweet commented out!
-    //var obj = data.getJson();
-    //myDweet.send(obj);
-            
-    emitter.emit("temp", data.temp2);
-
-    if (gMeasures.length > 300)
-        gMeasures.shift();
-});
-emitterMeas.on("tick", (time) => {  // for simulated engine
-    var c = sche.toClock2(time);
-    s.tick(c);
-});
-*/
-
-// Read initial data
-//
-/*myNasdaq.history()
-.then((result) => {
-    //console.log(result);
-    gNasdaq = result;
-});*/
-
-// Read simulated FMI data.
-//
-fmi.fmiReadFile("wfs.xml", (err,arr) => {
-    if (err) {
-        return log.error(err);
-    }
-    gWeather = arr;
-});
-
+function WsResponse(ws, obj)
+{
+    ws.send(JSON.stringify(obj));
+}
 
 //--------------------------------------------------------------------------------
-// Configure scheduler actions
-//
-/*s.add(new sche.IntervalAction(measure.ACTION_WEAT, emitter, 60,
-                              sche.toClock2(gTime), 
-                              () => {
-    log.verbose("reading weather data");
-    fmi.fmiRead((err,arr) => {
-        if (err) {
-            return log.error(err);
+/**
+ * @param {String} plugin - The name of the plugin
+ * @param {String} name - event name
+ * @param {String|Date} arg - argument for the event
+ */
+function eventHandler(plugin, name, arg)
+{
+    gPlugins.map((plug) => {
+        if (plug.name === plugin) {
+            log.normal("Handling event " + plugin + "." + name + " " + arg);
+            plug.action[name](arg);
         }
-        gWeather = arr;
-    });
-}));
-*/
+    })
+    var plug = gPlugins
+    var state = 0;
+    var realName = "";
 
-/*s.add(new sche.ClockAction(measure.ACTION_CLOCK1,
-			               emitter,
-			               sche.toClock(18,0),
-			               () => {
-    log.normal("reading nasdaq data");
-    myNasdaq.history()
-    .then((result) => {
-        console.log(result);
-        gNasdaq = result;
-    });
-
-}));*/
-
-//--------------------------------------------------------------------------------
-mqttClient.on('connect', () => {
-    console.log('mqtt connected');
-    mqttClient.subscribe('sensor/#');
-});
- 
-mqttClient.on('message', (topic, msg) => { 
-    //console.log(topic + " - " + msg.toString());
-    if (topic === "sensor/time") {
-        gTime.setMinutes(gTime.getMinutes() + 10);
-        gMeasure.time = gTime;
-        s.tick(sche.toClock2(gTime));
+    if (name.endsWith(".on")) {
+        state = 1;
+        realName = name.substring(0, name.length - 3);
+    }
+    else if (name.endsWith(".off")) {
+        state = 0;
+        realName = name.substring(0, name.length - 4);
     }
     else {
-        gMeasure.set(topic.substring(7), msg.toString());
-        if (topic === "sensor/t2") {
-            emitter.emit("temp", msg.toString());
-        }
-        if (topic === "sensor/h1") {
-            //console.log(gMeasure.values());
-            console.log(gMeasure.RedisKey, gMeasure.RedisValue);
-            redisClient.set(gMeasure.RedisKey, gMeasure.RedisValue);
-        }
+        log.error("invalid action");
+        return;
     }
-});
 
-
-redisClient.on('connect', () => {
-    console.log('redis connected');
-})
-
-//--------------------------------------------------------------------------------
-function action(name, state)
-{
-    log.history({time:   gTime,
-		 action: name,
-		 state:  state});
+    log.history(gTime, realName + " " + state);
+    
     mqttClient.publish('action/'+name, state.toString());
 }
 
-/*
- * Register actions.
- */
-s.add(new sche.CarHeaterAction(measure.ACTION_CAR1,  emitter, action));
-s.add(new sche.CarHeaterAction(measure.ACTION_CAR2,  emitter, action));
-s.add(new sche.RangeAction(measure.ACTION_LIGHT,     emitter, action));
-s.add(new sche.RangeAction(measure.ACTION_LIGHT2,    emitter, action));
-s.add(new sche.RoomHeaterAction(measure.ACTION_ROOM, emitter, action));
-s.load();
+
+//--------------------------------------------------------------------------------
+log.normal("HaGUI V" + cmd.version);
 
 // generate html template and exit
 //
 if (process.argv.indexOf("-gen") !== -1) {
-    s.genHtml();
+    //s.genHtml();
 }
+
+const WEBSOCKET = "WS ";
 
 //------------------------------------------------------------------------------
 // The web socket
 //
 wss.on('connection', (ws) => {
-    console.log("WebSocket opened.");
+    log.normal(WEBSOCKET + "opened");
     ws.on('message', (message) => {
+        var args = message.split(' ');
         try {
-            console.log('WebSocket received: %s', message);
-            var ret = onWsMessage(JSON.parse(message));
-            ws.send(JSON.stringify(ret));
+            log.normal(WEBSOCKET + ' >> ' + message);
+
+            WsMessage(ws, args);
         }
         catch (e) {
             log.error(e);
+
+            WsResponse(ws, {cmd: args[0],
+                            arg: args[1],
+                            data: [["ERR", e.message]] });
         }
     });
     
     ws.on('close', () => {
-       console.log("WebSocket closed."); 
+       log.normal(WEBSOCKET + "closed"); 
     });
 });
 
@@ -312,10 +212,10 @@ var server = http.createServer((req,res) => {
 });
 
 server.listen(SERVER_PORT, () => {
-    console.log("Server listening on: http://localhost:%s", SERVER_PORT);
+    log.normal("Server listening on: http://localhost:" + SERVER_PORT);
 });
 
 //------------------------------------------------------------------------------
 process.on('exit', () => {
-    console.log("Shutting down server.js");
+    log.normal("Shutting down server.js");
 });

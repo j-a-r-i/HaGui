@@ -1,17 +1,20 @@
 /*
- * Copyright (C) 2015-6 Jari Ojanen
+ * Copyright (C) 2015-7 Jari Ojanen
  */
 
-/** Store for history objects. History is for action changes.
- */
-var histories = [];
+var v   = require('./var'),
+    cmd = require('./commands');
 
-/** Store for error strings (objects in future).
- */
-var errors = [];
+var values = [
+    new v.MValue("l_hist"),  // Store for history objects. History is for action changes
+    new v.MValue("l_err")    // Store for error strings
+];
 
-var RED    = '\u001b[31m';
-var NORMAL = '\u001b[39m';
+const INDEX_HISTORY = 0;
+const INDEX_ERROR   = 1;
+
+const RED    = '\u001b[31m';
+const NORMAL = '\u001b[39m';
 
 /** Add string to log (verbose level).
  *
@@ -39,23 +42,22 @@ function getHistoryString(item)
     var tstr = [item.time.getHours(),
                 item.time.getMinutes(),
                 item.time.getSeconds()].join(":");
-    return JSON.stringify(dstr + " " + tstr + " " + item.action + " " + item.state);
+    return JSON.stringify(dstr + " " + tstr + " <" + item.action + "> " + item.state);
 }
 
 /** Add string to history.
  *
- * @param {Object} obj Message to be logged
+ * @param {Date} time  Time
+ * @param {string} msg Message to be logged
  */
-function history(obj)
+function history(time, msg)
 {
     //var d = new Date();
     //var s = d.toISOString().slice(5,19) + " " + msg;
     //var s = d.toLocaleString() + " " + msg;
-    
-    histories.push(obj);
-    if (histories.length > 100)
-	histories.shift();
-		
+
+    values[INDEX_HISTORY].set(msg, time);
+
     console.log(getHistoryString(obj));
 }
 
@@ -65,32 +67,25 @@ function history(obj)
  */
 function error(msg)
 {
-	errors.push(msg);
-	if (errors.length > 100)
-		errors.shift();
+    values[INDEX_ERROR].set(msg, "");
 		
 	console.log(RED + "ERROR " + msg + NORMAL);
 }
 
-function getErrors()
+//-----------------------------------------------------------------------------
+function initialize(cfg)
 {
-	return errors;
-}
-
-function getHistory()
-{
-    return histories.map((i) => {
-        return getHistoryString(i);
-    });
+    return values;
 }
 
 //-----------------------------------------------------------------------------
 module.exports = {
+    name: cmd.PLUG_LOG,
+    initialize: initialize,
+    action : {},   
+
 	verbose: verbose,
 	normal: normal,
 	history: history,
 	error: error,
-	
-	getErrors: getErrors,
-	getHistory: getHistory
 };

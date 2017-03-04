@@ -5,12 +5,19 @@
  */
 
 var exec = require('child_process').exec,
-    log  = require('./log.js'),
+    log  = require('./log'),
+    cmd  = require('./commands'),
+    v    = require('./var'),
     fs   = require('fs');
 
 const MEMINFO = '/proc/meminfo';
 const LOADAVG = '/proc/loadavg';
 const UPTIME  = '/proc/uptime';
+
+
+var values = [
+    new v.MValue('status')
+]
 
 //-----------------------------------------------------------------------------
 function df()
@@ -27,7 +34,6 @@ function df()
 //-----------------------------------------------------------------------------
 function meminfo()
 {
-    var minfo = {};
     try {
         var data = fs.readFileSync(MEMINFO).toString().trim();
         data.split("\n").forEach(function (line) {
@@ -35,56 +41,85 @@ function meminfo()
             arr[0] = arr[0].replace('(', '_');
             arr[0] = arr[0].replace(')', '');
             if (arr.length === 2) {
-                minfo[arr[0]] = parseInt(arr[1]);
+                values[0].set(parseInt(arr[1]), arr[0]);
             }
         });
     }
     catch (e) {
         log.error(e);
-        minfo = { free: 0 };
     }
-    return minfo;
+}
+
+
+//-----------------------------------------------------------------------------
+/**
+ *  @param {String}  filename
+ *  @returns {String[]}
+ */
+function readLine(filename)
+{
+    try {
+        var line = fs.readFileSync(LOADAVG).toString();
+
+        return line.trim().split(' ');
+    }
+    catch (e) {
+        log.error(e);
+        return [];
+    }    
 }
 
 //-----------------------------------------------------------------------------
 function loadavg()
 {
-    var line = "";
-    try {
-        line = fs.readFileSync(LOADAVG).toString();
-    }
-    catch (e) {
-        log.error(e);
-        line = "-1 -1 -1 -1";
-    }
-    return line.trim().split(" ");
+    const NAMES = ["load_1min", "load_5min", "load_15min", "Tasks", "LastPID"];
+
+    return readFile(LOADAVG).map((item, index) => {
+        values[0].set(item, NAMES[index]);
+    });
 }
 
 //-----------------------------------------------------------------------------
 function uptime()
 {
-    var line = fs.readFileSync(UPTIME).toString();
-    var up = line.trim().split(" ");
-    
-    up[0] = parseFloat(up[0]) / (24*3600); 
-    up[1] = parseFloat(up[1]) / (24*3600);
-    
-    return up;
+    const NAMES = ["uptime", "idleTime"];
+
+    return readFile(UPTIME).map((item, index) => {
+        values[0].set(parseFloat(item) / (24 * 3600),
+                      NAMES[index]);
+    });
 }
 
 //--------------------------------------------------------------------------------
 // Dummy timer to print ping
-//
-function timer2()
+/*function timer2()
 {
   var rss = process.memoryUsage().rss / (1024*1024);
   log.normal("RSS = " + rss);
+}*/
+
+//-----------------------------------------------------------------------------
+function initialize(cfg)
+{
+    return values;
+}
+
+//-----------------------------------------------------------------------------
+function read()
+{
+    values[0].clearHistory();
+
+    loadavg();
+    uptime();
+    meminfo();
 }
 
 
 //-----------------------------------------------------------------------------
 module.exports = {
-	meminfo: meminfo,
-	loadavg: loadavg,
-    uptime: uptime
+    name: cmd.PLUG_INFO,
+    initialize: initialize,
+    action: {
+        read: read
+    }
 };
