@@ -6,7 +6,7 @@ var sax = require('sax');
  * @param {String[]} searches
  * @returns {Promise.<String[]>}
  */
-function parseXml(buf, searches)
+async function parseXml(buf, searches)
 {
     return new Promise((resolve,reject) => {
         var parser = sax.parser(true);
@@ -52,7 +52,7 @@ function parseXml(buf, searches)
  * @param {String[]} path - XPath to where the tags are fetched
  * @returns {Promise.<Object>}
  */
-function parseXmlTags(buf, path)
+async function parseXmlTags(buf, path)
 {
     return new Promise((resolve,reject) => {
         var parser = sax.parser(true);

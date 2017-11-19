@@ -102,7 +102,7 @@ function request(options, msg="")
  * @param {Boolean} parseJson - Is response in json format
  * @returns {Promise}
  */
-function requests(options, parseJson)
+async function requests(options, parseJson)
 {
     return new Promise((resolve,reject) => {
 	    var site = options.host;

@@ -9,39 +9,59 @@ var myhttp = require('./myhttp'),
     myxml  = require('./myxml'),
     log    = require('./log'),
     cmd    = require('./commands'),
-    v      = require('./var');
+    v      = require('./var'),
+    qstr   = require('querystring');
 
 const stocks = [ 
-    new v.MValue('HEX24249'), // Citycon
-    new v.MValue('HEX24271'), // Fortum
-    new v.MValue('HEX24311'), // Nokia
-    new v.MValue('HEX24332'), // Ponsse
-    new v.MValue('HEX69423'), // Aktia A
-    new v.MValue('HEX24308'), // Nordea
-    new v.MValue('HEX36695'), // Outotec
-    new v.MValue('HEX24381'), // TeliaSonera
-    new v.MValue('HEX35363')  // Orion B
+    new v.MValue('24249'), // Citycon
+    new v.MValue('24271'), // Fortum
+    new v.MValue('24311'), // Nokia
+    new v.MValue('24332'), // Ponsse
+    new v.MValue('69423'), // Aktia A
+    new v.MValue('24308'), // Nordea
+    new v.MValue('36695'), // Outotec
+    new v.MValue('24381'), // TeliaSonera
+    new v.MValue('35363')  // Orion B
 ];
 
 const SITE = "www.nasdaqomxnordic.com";
 
 
+//-----------------------------------------------------------------------------
 // returns Promise for downloading data from nasdaqomxnordic site.
 //
-function download(path) {
+async function download(system, action, instrument)
+{
+    var qstring = qstr.stringify({Subsystem : system,
+				  Action : 'Get'+action,
+				  Instrument: 'HEX' + instrument});
+
+    if (system === 'History') {
+	qstring = qstring + '&FromDate=2017-10-01';
+    }
+				  
     var opt = { host: SITE,
-                path: '/webproxy/DataFeedProxy.aspx?Subsystem=' + path,
+                path: '/webproxy/DataFeedProxy.aspx?' + qstring,
                 port: 443,
                 method: 'GET'
                 };
-    return myhttp.requests(opt, false);
+    return await myhttp.requests(opt, false);
 }
 
 //-----------------------------------------------------------------------------
-function history()
+async function history()
 {
-    var items = stocks.map((mval) => {
-        return download('History&Action=GetDataSeries&Instrument=' + mval.name + '&FromDate=2017-01-01');
+    for (let mval of stocks) {
+	let xml = await download('History', 'DataSeries', mval.name);
+
+	let data = await myxml.parseXmlTags(xml, 'response/hi');
+
+	let values = data.map( (i) => { return parseFloat(i.cp); });
+	console.log(values);
+    }
+    
+/*    var items = stocks.map((mval) => {
+        return download('History', 'DataSeries', mval.name);
     });
 
     Promise.all(items)
@@ -68,31 +88,23 @@ function history()
     .catch((err) => {
         log.error(err);
     });
+*/
 }
 
 //-----------------------------------------------------------------------------
-function prices()
+async function prices()
 {
-    var items = stocks.map((mval) => {
-        return download('Prices&Action=GetInstrument&Instrument=' + mval.name);
-    });
+    for (let mval of stocks) {
+	let data = await download('Prices', 'Instrument', mval.name);
 
-    Promise.all(items)
-    .then((data) => {
-        var result = data.map((r) => {
-            return myxml.parseXmlTags(r, 'response/inst');
-        });
-        return Promise.all(result);
-    })
-    .then((data) => {
-        data.forEach((inst) => {
-            console.log(inst[0].fnm, inst[0].nm, inst[0].t, inst[0].bp);
-        });
-    })
-    .catch((err) => {
-        log.error(err);
-    }); 
+	let result = await myxml.parseXmlTags(data, 'response/inst');
+	//console.log(result);
+	console.log(result[0].fnm, result[0].nm, result[0].t, result[0].bp);
+    }
 }
+
+//history();
+//prices();
 
 //-----------------------------------------------------------------------------
 function initialize(cfg)
