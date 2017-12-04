@@ -1,10 +1,11 @@
-var redis      = require('redis'),
-    config     = require('./config.json');
+const redis      = require('redis'),
+      log        = require('./log'),
+      config     = require('./config.json');
 
-var redisClient = redis.createClient(6379, config.redisServer),
+var redisClient = redis.createClient(6379, config.redisServer);
 
 //--------------------------------------------------------------------------------
-function redisKeys() {
+async function redisKeys() {
     return new Promise((resolve, reject) => {
         redisClient.multi() 
         .keys('*', (err, keys) => {
@@ -20,20 +21,39 @@ function redisKeys() {
     });
 }
 
-function redisValue(key) {
+//--------------------------------------------------------------------------------
+async function redisValue(key) {
     return new Promise((resolve, reject) => {
-        redisClient.get(key, (err, value) => {
+        redisClient.lrange(key, 0, -1, (err, values) => {
             if (err) {
                 log.error(err);
                 return reject(err);
             }
-            resolve(JSON.parse(value));
+            resolve( values.map((i) => {
+                var items = i.split(",");
+                return [new Date(parseInt(items[0] * 1000)), 
+                        items[1]];
+            }));
+            //resolve(values);
+        });
+    });
+}
+
+//--------------------------------------------------------------------------------
+async function redisLen(key) {
+    return new Promise((resolve, reject) => {
+        redisClient.llen(key, (err, length) => {
+            if (err) {
+                log.error(err);
+                return reject(err);
+            }
+            resolve(length);
         });
     });
 }
 
 
-function redisValueList(keys) {
+async function redisValueList(keys) {
     return new Promise((resolve,reject) => {
         var items = keys.map(redisValue);
 
@@ -101,3 +121,12 @@ gCommands[cmd.LATEST] = (ws,args) => {
     });
     return null;
 };*/
+
+
+//-----------------------------------------------------------------------------
+module.exports = {
+    keys: redisKeys,
+    value: redisValue,
+    length: redisLen,
+    valueList: redisValueList
+};
