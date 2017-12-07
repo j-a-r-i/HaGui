@@ -14,15 +14,26 @@ const MEMINFO = '/proc/meminfo';
 const LOADAVG = '/proc/loadavg';
 const UPTIME  = '/proc/uptime';
 
+const VAL_FREERAM = 0;
+const VAL_UPTIME = 1;
+const VAL_LOAD_1MIN = 2;
+const VAL_LOAD_5MIN = 3;
+const VAL_LOAD_15MIN = 4;
 
 var values = [
-    new v.MValue('status')
-]
+    new v.MValue('freeRam'),
+    new v.MValue('uptime'),
+    new v.MValue('load1min'),
+    new v.MValue('load5min'),
+    new v.MValue('load15min')
+];
+
+
 
 //-----------------------------------------------------------------------------
 function df()
 {
-    var c1 = exec("df", function (error, stdout, stderr) {
+    var c1 = exec("df", (error, stdout, stderr) => {
         if (error !== null) {
             console.log('ERROR: ' + error);
             return;
@@ -35,15 +46,17 @@ function df()
 function meminfo()
 {
     try {
-        var data = fs.readFileSync(MEMINFO).toString().trim();
-        data.split("\n").forEach(function (line) {
+	var freeMem = 0;
+	var mem = {}
+        var data = fs.readFileSync(MEMINFO).toString();
+        data.split("\n").forEach((line) => {
             var arr = line.split(':');
-            arr[0] = arr[0].replace('(', '_');
-            arr[0] = arr[0].replace(')', '');
-            if (arr.length === 2) {
-                values[0].set(parseInt(arr[1]), arr[0]);
-            }
+	    mem[arr[0]] = parseInt(arr[1]);
         });
+	freeMem = (mem['MemFree'] + mem['Cached'] + mem['Buffers']) / 1024;
+	//console.log("free: " + freeMem);
+
+	values[VAL_FREERAM].value = freeMem;
     }
     catch (e) {
         log.error(e);
@@ -59,9 +72,9 @@ function meminfo()
 function readLine(filename)
 {
     try {
-        var line = fs.readFileSync(LOADAVG).toString();
+        let line = fs.readFileSync(filename).toString().trim();
 
-        return line.trim().split(' ');
+        return line.split(' ');
     }
     catch (e) {
         log.error(e);
@@ -72,53 +85,50 @@ function readLine(filename)
 //-----------------------------------------------------------------------------
 function loadavg()
 {
-    const NAMES = ["load_1min", "load_5min", "load_15min", "Tasks", "LastPID"];
+    //file contents: <load_1min> <load_5min> <load_15min> <Tasks> <LastPID>
+    
+    let items = readLine(LOADAVG);
 
-    return readFile(LOADAVG).map((item, index) => {
-        values[0].set(item, NAMES[index]);
-    });
+    if (items.length === 5) {
+	values[VAL_LOAD_1MIN].value = parseFloat(items[0]);
+	values[VAL_LOAD_5MIN].value = parseFloat(items[1]);
+	values[VAL_LOAD_15MIN].value = parseFloat(items[2]);
+    }
+    else {
+	log.error("invalid " + LOADAVG);
+    }
 }
 
 //-----------------------------------------------------------------------------
 function uptime()
 {
-    const NAMES = ["uptime", "idleTime"];
+    //file contents: <uptime> <idleTime>
+    var items = readLine(UPTIME);
 
-    return readFile(UPTIME).map((item, index) => {
-        values[0].set(parseFloat(item) / (24 * 3600),
-                      NAMES[index]);
-    });
-}
+    if (items.length === 2) {
+	let uptime = parseFloat(items[0]) / (24*3600);  // unit is days
 
-//--------------------------------------------------------------------------------
-// Dummy timer to print ping
-/*function timer2()
-{
-  var rss = process.memoryUsage().rss / (1024*1024);
-  log.normal("RSS = " + rss);
-}*/
-
-//-----------------------------------------------------------------------------
-function initialize(cfg)
-{
-    return values;
+	values[VAL_UPTIME].value = uptime;
+    }
+    else {
+	log.error("invalid " + UPTIME);
+    }
 }
 
 //-----------------------------------------------------------------------------
 function read()
 {
-    values[0].clearHistory();
+    values[VAL_UPTIME].clearHistory();
 
     loadavg();
     uptime();
     meminfo();
 }
 
-
 //-----------------------------------------------------------------------------
 module.exports = {
     name: cmd.PLUG_INFO,
-    initialize: initialize,
+    initialize: (cfg) => { return values; },
     action: {
         read: read
     }

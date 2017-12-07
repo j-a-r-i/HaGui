@@ -45,15 +45,15 @@ function getp(url)
 	var site = url;
 
 	log.normal("http getp " + url + "...");
-        http.get(url, function(res) {
+        http.get(url, (res) => {
             var body = '';
-            res.on('data', function(d) {
+            res.on('data', (d) => {
                 body += d;
             });
-            res.on('error', function(e) {
+            res.on('error', (e) => {
                 reject(e);
             });
-            res.on('end', function() {
+            res.on('end', () => {
 		log.normal("http getp " + url + " done.");
                 resolve(body);
             });
@@ -65,11 +65,11 @@ function getp(url)
 /** http request with promise.
  * @returns {Promise.<String>}
  */
-function request(options, msg="")
+async function request(options, msg="")
 {
     return new Promise((resolve,reject) => {
-	    var site = options.host;
-	    log.normal("request " + site + "...");
+	var site = options.host;
+	log.normal("request " + site + "...");
         var r = http.request(options, (res) => {
             if (res.statusCode != 200) {
                 log.error('status: ' + res.statusCode + "  " + res.statusMessage);
@@ -105,8 +105,8 @@ function request(options, msg="")
 async function requests(options, parseJson)
 {
     return new Promise((resolve,reject) => {
-	    var site = options.host;
-	    log.verbose("request " + site + "...");
+	var site = options.host;
+	log.verbose("request " + site + "...");
         var r = https.request(options, (res) => {
             if (res.statusCode != 200) {
                 console.log('status: ' + res.statusCode);
@@ -143,8 +143,8 @@ async function requests(options, parseJson)
 
 //-----------------------------------------------------------------------------
 module.exports = {
-	get: get,
-	getp: getp,
+    get: get,
+    getp: getp,
     request: request,
     requests: requests
 };

@@ -1,37 +1,46 @@
+
 function begin_tag(name, attr)
 {
-    let ret = "<" + name;
+    let ret = "<"+name;
+    let keys = Object.keys(attr);
 
-    Object.keys(attr).forEach((k) => {
-        ret += (" " + k +"=\"" + attr[k] + "\"");
+    keys.forEach((key) => {
+	ret += (" "+key+"=\""+attr[key]+"\"");
     });
-    ret += ">";
+
+    ret += ">\n";
     return ret;
 }
-
 function end_tag(name)
 {
     return "</" + name + ">\n";
 }
 
-function tag(name, attr, ...data)
+function tag(name, attr, ...childs)
 {
-    let body = data.join("\n");
-
-    return begin_tag(name, attr) + body + "</" + name + ">\n";
-}
-
-function head(name, attr, ...data)
-{
-    let ret = begin_tag(name, {});
-    attr['scripts'].forEach((s) => {
-        ret += tag("script", {src: s});
-    })
+    let ret = begin_tag(name, attr);
+    ret += childs.join("\n");
     ret += end_tag(name);
     return ret;
 }
 
-console.log(tag('html', {}, 
-                head('head', {title: "test page",
-                              scripts: ["foo.js", "bar.js"]}),
-                tag('body', {})));
+
+function head(name, attr, ...childs)
+{
+    let ret = begin_tag(name, {});
+
+    attr.scripts.forEach((s) => {
+	ret += tag('script', {src: s});
+    });
+    
+    ret += end_tag(name);
+
+    return ret;
+}
+
+
+
+console.log(tag("html", {},
+		head("head", { scripts: ["foo", "bar"]
+		}),
+		tag("body", {})));

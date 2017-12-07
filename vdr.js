@@ -104,7 +104,7 @@ function download()
         .on('close',  () => {
             fout.end();          
         });
-        //}).on('end', function() {
+        //}).on('end', () => {
         //  console.log('DONE');
     });
 }

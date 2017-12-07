@@ -43,6 +43,24 @@ function clockInc(clock, duration)
 }
 
 //--------------------------------------------------------------------------------
+class History {
+    constructor(name) {
+	this.list = [];
+    }
+
+    clear() {
+	this.list = [];
+    }
+
+    add(time, value) {
+	this.list.push( [time, value] );
+	if (this.history.length > 300) {
+	    this.history.shift();
+	}
+    }
+}
+
+//--------------------------------------------------------------------------------
 class MValue {
 	/**
 	 * @param {String} name
@@ -51,22 +69,20 @@ class MValue {
         this._value = -99.0;
         this.name = name;
 
-        this.history = [];
+        this.history = new History(name);
         this.lastChanged = 0;
         this.eventHandler = null;
 
     }
 
-	set(value, time) {
-		this.history.push( [time, value] );
-		if (this.history.length > 300)
-			this.history.shift();
-		this._value = value;
-	}
+    set(value, time) {
+	this.history.add(time, value);
+	this._value = value;
+    }
 
-	clearHistory() {
-		this.history = [];
-	}
+    clearHistory() {
+	this.history.clear();
+    }
 
     get value() {
         return this._value;
@@ -74,7 +90,7 @@ class MValue {
 
     set value(newValue) {
         if (Math.abs(newValue - this._value) > 0.01) {  // value is changed
-			this.set(newValue, "");
+	    this.set(newValue, new Date());
             if (this.eventHandler != null) {
                 this.eventHandler(this.name, newValue);
             }
